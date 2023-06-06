@@ -161,47 +161,47 @@ public class FunctionUtil {
             Edge edge = it.next();
 //            LOGGER.info("All Methods {} Intruduce {}:",edge.src().getBytecodeSignature(),npi_class_method);
 
-            for (String ownjar : OWNJarsFunctions.keySet()) {
-//                if(!Intro_relations.contains(new Pair<>(ownjar,npijar))){
-//                    continue;
-//                }
-                String own_class_methodstr = OWNJarsFunctions.get(ownjar);
-                String[] own_class_methods = own_class_methodstr.split(";");
-                for (String own_class_method : own_class_methods) {
-
-                    if (own_class_method.equals(edge.src().getDeclaringClass().getName() + "_" + edge.src().getName())) {
-//                        if(!Intro_relations.contains(new Pair<>(ownjar,npijar))) {
-//                            break;
-//                        }
-//                        if(!Intro_relations.contains(new Pair<>(ownjar,npijar)))
-//                            Intro_relations.add(new Pair<>("一方库Jar包: "+ownjar,npijar));
-                        System.out.println("一方库Jar包: " + ownjar + " -> 孤立Jar包: " + npijar);
-                        System.out.println("一方库Method: " + own_class_method + " -> Method: " + npi_class_method);
-                        return;
+//            for (String ownjar : OWNJarsFunctions.keySet()) {
+////                if(!Intro_relations.contains(new Pair<>(ownjar,npijar))){
+////                    continue;
+////                }
+//                String own_class_methodstr = OWNJarsFunctions.get(ownjar);
+//                String[] own_class_methods = own_class_methodstr.split(";");
+//                for (String own_class_method : own_class_methods) {
+//
+//                    if (own_class_method.equals(edge.src().getDeclaringClass().getName() + "_" + edge.src().getName())) {
+////                        if(!Intro_relations.contains(new Pair<>(ownjar,npijar))) {
+////                            break;
+////                        }
+////                        if(!Intro_relations.contains(new Pair<>(ownjar,npijar)))
+////                            Intro_relations.add(new Pair<>("一方库Jar包: "+ownjar,npijar));
+//                        System.out.println("一方库Jar包: " + ownjar + " -> 孤立Jar包: " + npijar);
+//                        System.out.println("一方库Method: " + own_class_method + " -> Method: " + npi_class_method);
 //                        return;
-                    }
-                }
-
-            }
-            for (String directjar : DIRECTJarsFunctions.keySet()) {
-//                if(!Intro_relations.contains(new Pair<>(directjar,npijar))){
-//                    continue;
+////                        return;
+//                    }
 //                }
-                String direct_class_methodstr = DIRECTJarsFunctions.get(directjar);
-                String[] direct_class_methods = direct_class_methodstr.split(";");
-                for (String direct_class_method : direct_class_methods) {
-                    if (direct_class_method.equals(edge.src().getDeclaringClass().getName() + "_" + edge.src().getName())) {
-//                        if(!Intro_relations.contains(new Pair<>(directjar,npijar))) {
-//                            break;
-//                        }
-//                        Intro_relations.add(new Pair<>("二方库Jar包: "+directjar,npijar));
-
-                        System.out.println("二方库Jar包: " + directjar + " -> 孤立Jar包: " + npijar);
-                        System.out.println("二方库Method: " + direct_class_method + " -> Method: " + npi_class_method);
-                        return;
-                    }
-                }
-            }
+//
+//            }
+//            for (String directjar : DIRECTJarsFunctions.keySet()) {
+////                if(!Intro_relations.contains(new Pair<>(directjar,npijar))){
+////                    continue;
+////                }
+//                String direct_class_methodstr = DIRECTJarsFunctions.get(directjar);
+//                String[] direct_class_methods = direct_class_methodstr.split(";");
+//                for (String direct_class_method : direct_class_methods) {
+//                    if (direct_class_method.equals(edge.src().getDeclaringClass().getName() + "_" + edge.src().getName())) {
+////                        if(!Intro_relations.contains(new Pair<>(directjar,npijar))) {
+////                            break;
+////                        }
+////                        Intro_relations.add(new Pair<>("二方库Jar包: "+directjar,npijar));
+//
+//                        System.out.println("二方库Jar包: " + directjar + " -> 孤立Jar包: " + npijar);
+//                        System.out.println("二方库Method: " + direct_class_method + " -> Method: " + npi_class_method);
+//                        return;
+//                    }
+//                }
+//            }
             for (String thirdjar : THIRDJarsFunctions.keySet()) {
 //                if(!Intro_relations.contains(new Pair<>(directjar,npijar))){
 //                    continue;

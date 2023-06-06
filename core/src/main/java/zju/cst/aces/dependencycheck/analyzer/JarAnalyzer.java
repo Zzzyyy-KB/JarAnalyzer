@@ -782,16 +782,16 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 //
 //
 //        //对一方、二方库jar看是否有调用的关系
-        for(Dependency owndependency : OwnGroupDependencies.values()){
-            String classfunctionstr = FunctionUtil.functionDetect(owndependency.getActualFilePath().replace('\\','/'),owndependency.artifactid,true);
-            if(classfunctionstr!= "")
-                FunctionUtil.OWNJarsFunctions.put(owndependency.getDisplayFileName(),classfunctionstr);
-        }
-        for(Dependency directdependency : DirectGroupDependencies.values()){
-            String classfunctionstr = FunctionUtil.functionDetect(directdependency.getActualFilePath().replace('\\','/'),directdependency.artifactid,true);
-            if(classfunctionstr!= "")
-                FunctionUtil.DIRECTJarsFunctions.put(directdependency.getDisplayFileName(),classfunctionstr);
-        }
+//        for(Dependency owndependency : OwnGroupDependencies.values()){
+//            String classfunctionstr = FunctionUtil.functionDetect(owndependency.getActualFilePath().replace('\\','/'),owndependency.artifactid,true);
+//            if(classfunctionstr!= "")
+//                FunctionUtil.OWNJarsFunctions.put(owndependency.getDisplayFileName(),classfunctionstr);
+//        }
+//        for(Dependency directdependency : DirectGroupDependencies.values()){
+//            String classfunctionstr = FunctionUtil.functionDetect(directdependency.getActualFilePath().replace('\\','/'),directdependency.artifactid,true);
+//            if(classfunctionstr!= "")
+//                FunctionUtil.DIRECTJarsFunctions.put(directdependency.getDisplayFileName(),classfunctionstr);
+//        }
 
         for(Dependency thirddependency : ThirdGroupDependencies.values()){
             String classfunctionstr = FunctionUtil.functionDetect(thirddependency.getActualFilePath().replace('\\','/'),thirddependency.artifactid,true);
