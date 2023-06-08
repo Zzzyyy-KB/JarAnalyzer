@@ -635,6 +635,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                                      *collection4  不考虑版本号了
                                      * 如果前面有也是作为开头，如果没有前面，则artifactIdtemp应作为头
                                      * but: spring-boot-starter-json-2.2.2.RELEASE.jar
+                                     *
                                      * */
 
                                     else if(dep.getFileName()!= null && dep.getFileName().matches("(\\S.)*"+artifactIdtemp+"-?\\d.*")){
@@ -751,7 +752,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
             FunctionUtil.ClassPaths = FunctionUtil.ClassPaths.concat(dcDependencies.get(i).getActualFilePath().replace('\\','/')+File.pathSeparatorChar);
 
             //排除一方、二方库以及war包后的 非pom引入jar包
-            if(dcDependencies.get(i).level!="own"&&dcDependencies.get(i).level!="direct"&&!dcDependencies.get(i).getDisplayFileName().contains(".war")) {
+            if(dcDependencies.get(i).level!="own"&&dcDependencies.get(i).level!="direct") {
 
                 if (degree[i] == 0) {
                     Dependency dependency =  dcDependencies.get(i);
@@ -767,14 +768,14 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
         }
 
         //获取NPIjar的所有函数名int i =0;
-//        for(Dependency NPIJar : NPIJars.values()){
-//            String classfunctionstr = FunctionUtil.functionDetect(NPIJar.getActualFilePath().replace('\\','/'),NPIJar.artifactid,false);
-//            if(classfunctionstr!= "") {
-//                FunctionUtil.NPIJarsFunctions.put(NPIJar.getDisplayFileName(), classfunctionstr);
-//            }
-//            else System.out.println("classfunctionstr为空的孤立Jar包: "+NPIJar.getDisplayFileName());
-////            else System.out.println(NPIJar.getDisplayFileName()+"            "+i++);
-//        }
+        for(Dependency NPIJar : NPIJars.values()){
+            String classfunctionstr = FunctionUtil.functionDetect(NPIJar.getActualFilePath().replace('\\','/'),NPIJar.artifactid,false);
+            if(classfunctionstr!= "") {
+                FunctionUtil.NPIJarsFunctions.put(NPIJar.getDisplayFileName(), classfunctionstr);
+            }
+            else System.out.println("classfunctionstr为空的孤立Jar包: "+NPIJar.getDisplayFileName());
+//            else System.out.println(NPIJar.getDisplayFileName()+"            "+i++);
+        }
 //
 //
 //
@@ -782,16 +783,16 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 //
 //
 //        //对一方、二方库jar看是否有调用的关系
-//        for(Dependency owndependency : OwnGroupDependencies.values()){
-//            String classfunctionstr = FunctionUtil.functionDetect(owndependency.getActualFilePath().replace('\\','/'),owndependency.artifactid,true);
-//            if(classfunctionstr!= "")
-//                FunctionUtil.OWNJarsFunctions.put(owndependency.getDisplayFileName(),classfunctionstr);
-//        }
-//        for(Dependency directdependency : DirectGroupDependencies.values()){
-//            String classfunctionstr = FunctionUtil.functionDetect(directdependency.getActualFilePath().replace('\\','/'),directdependency.artifactid,true);
-//            if(classfunctionstr!= "")
-//                FunctionUtil.DIRECTJarsFunctions.put(directdependency.getDisplayFileName(),classfunctionstr);
-//        }
+        for(Dependency owndependency : OwnGroupDependencies.values()){
+            String classfunctionstr = FunctionUtil.functionDetect(owndependency.getActualFilePath().replace('\\','/'),owndependency.artifactid,true);
+            if(classfunctionstr!= "")
+                FunctionUtil.OWNJarsFunctions.put(owndependency.getDisplayFileName(),classfunctionstr);
+        }
+        for(Dependency directdependency : DirectGroupDependencies.values()){
+            String classfunctionstr = FunctionUtil.functionDetect(directdependency.getActualFilePath().replace('\\','/'),directdependency.artifactid,true);
+            if(classfunctionstr!= "")
+                FunctionUtil.DIRECTJarsFunctions.put(directdependency.getDisplayFileName(),classfunctionstr);
+        }
 
         for(Dependency thirddependency : ThirdGroupDependencies.values()){
             String classfunctionstr = FunctionUtil.functionDetect(thirddependency.getActualFilePath().replace('\\','/'),thirddependency.artifactid,true);

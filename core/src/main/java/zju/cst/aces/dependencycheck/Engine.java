@@ -640,23 +640,23 @@ public class Engine implements FileFilter, AutoCloseable {
             }
             //建立依赖树
             if(analyzer.getName()=="Jar Analyzer"){
-//                buildDependencyTree();
+                buildDependencyTree();
 
-                try {
-                    JarAnalyzer jarAnalyzer =new JarAnalyzer();
-
-                    int index = 0;
-                    for (Dependency dependency : dependencies
-                    ) {
-                        jarAnalyzer.analyzeIntro(dependency, dependencies, index++,MARKFILE);
-                    }
-
-                    jarAnalyzer.detectNPIJar(dependencies);
-
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                }
+//                try {
+//                    JarAnalyzer jarAnalyzer =new JarAnalyzer();
+//
+//                    int index = 0;
+//                    for (Dependency dependency : dependencies
+//                    ) {
+//                        jarAnalyzer.analyzeIntro(dependency, dependencies, index++,MARKFILE);
+//                    }
+//
+//                    jarAnalyzer.detectNPIJar(dependencies);
+//
+//                }
+//                catch (Exception e) {
+//                    e.printStackTrace();
+//                }
 
 
 
@@ -664,6 +664,8 @@ public class Engine implements FileFilter, AutoCloseable {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throwFatalExceptionCollection("Analysis has been interrupted.", e, exceptions);
+        } catch (XmlPullParserException e) {
+            throw new RuntimeException(e);
         } finally {
             executorService.shutdown();
         }
@@ -1067,12 +1069,12 @@ public class Engine implements FileFilter, AutoCloseable {
             jarAnalyzer.topoSort(edges,nodeEdges,dependencies);
 
 
-            root2.put("comboNodeEdges", edges);
-            writeJsonFile(file2,root2);
-
-            root3.put("comboNodes", combos);
-
-            writeJsonFile(file3,root3);
+//            root2.put("comboNodeEdges", edges);
+//            writeJsonFile(file2,root2);
+//
+//            root3.put("comboNodes", combos);
+//
+//            writeJsonFile(file3,root3);
 
 
 

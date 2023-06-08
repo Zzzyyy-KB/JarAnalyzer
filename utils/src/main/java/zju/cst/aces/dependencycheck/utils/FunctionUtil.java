@@ -134,6 +134,9 @@ public class FunctionUtil {
 
 
             for (ClassNode clazz : targetClasses) {
+
+
+
                 for (MethodNode method : clazz.methods) {
                     // skip non-public methods and abstract method
                     if (method.access != Opcodes.ACC_PUBLIC)
@@ -237,19 +240,6 @@ public class FunctionUtil {
     }
 
 
-    public static long transferTo(InputStream is, OutputStream out) throws IOException {
-        final int DEFAULT_BUFFER_SIZE = 8192;
-        Objects.requireNonNull(out, "out");
-        long transferred = 0;
-        byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
-        int read;
-        while ((read = is.read(buffer, 0, DEFAULT_BUFFER_SIZE)) >= 0) {
-            out.write(buffer, 0, read);
-            transferred += read;
-        }
-        return transferred;
-    }
-
     public static void CFGBuild() {
 
 
@@ -258,9 +248,9 @@ public class FunctionUtil {
 
 //        默认先用CHA进行分析
         SootExecutorUtil.setSootEntryPoints(entrances);
-//        SootExecutorUtil.doCHAAanalysis();
+        SootExecutorUtil.doCHAAanalysis();
 
-        SootExecutorUtil.doFastSparkPointsToAnalysis(new HashMap<>(), CGType.VTA, null);
+//        SootExecutorUtil.doFastSparkPointsToAnalysis(new HashMap<>(), CGType.VTA, null);
         CallGraph cg = Scene.v().getCallGraph();
 
 
@@ -275,19 +265,28 @@ public class FunctionUtil {
         Set<String> findNPIJARs = new HashSet<>();
         for (Iterator<MethodOrMethodContext> iterator = Scene.v().getReachableMethods().listener(); iterator.hasNext(); ) {
             SootMethod method = (SootMethod) iterator.next();
+
+            NODE_LOGGER.info("{}: {} :{}", method.getBytecodeSignature(), method.getNumber(),method.getActiveBody());
+            for (Iterator<Edge> it = newCg.edgesOutOf(method); it.hasNext(); ) {
+                Edge edge = it.next();
+                EDGE_LOGGER.info("{} -> {}", edge.src().getNumber(), edge.tgt().getNumber());
+            }
 //            NODE_LOGGER.info("{}: {}", method.getBytecodeSignature(), method.getNumber());
             boolean flag = false;
+
+
             //如果该method的下层引用全是jdk的method
-//            for (Iterator<Edge> it = newCg.edgesOutOf(method); it.hasNext(); ) {
-//                Edge edge = it.next();
-//                if (edge.tgt().getName() == method.getName() && edge.tgt().isJavaLibraryMethod()) {
-//                    flag = true;
-//                }
-//                if (flag) break;
-//            }
-//            if (flag)
-//                continue;
-//            ;
+            for (Iterator<Edge> it = newCg.edgesOutOf(method); it.hasNext(); ) {
+                Edge edge = it.next();
+                System.out.println();
+                if (edge.tgt().getName() == method.getName()) {
+                    flag = true;
+                    break;
+                }
+            }
+            if (flag)
+                continue;
+            ;
 
             //过滤简单函数
 //            if(method.getName().equals("read")
@@ -347,11 +346,9 @@ public class FunctionUtil {
                             System.out.println("第" + findNPIJARs.size() + "个孤立jar包: " + npijar);
 
                         }
-                        //levele 记录几层引入
-//                        findSourceMethod(method,newCg,npi_class_method,npijar,1);
+
                         findSourceMethod(method, newCg, npi_class_method, npijar);
-//                    System.out.println(npijar);
-//                        it.remove();
+
 
                     }
                 }
@@ -372,22 +369,6 @@ public class FunctionUtil {
 
     }
 
-
-//    public static void main(String[] args) {
-//////        HashMap<String ,String> h2 = new HashMap<>();
-//////        h2.put("1","s");
-//////        h2.put("2","b");
-//////        System.out.println(h2.keySet());
-//        functionDetect("D:\\1postgraduate\\JarAnalyzer\\cli\\target\\maven-assembly-plugin\\dependency-check-7.2.1-SNAPSHOT-jar-with-dependencies.jar","",true);
-//        CFGBuild();
-////        String fileName = "spring-context-support-5.2.9.RELEASE.jar";
-////        if (fileName.matches("^spring-context-.*")) {
-////            System.out.println("文件名以'spring-context-'开头");
-////        } else {
-////            System.out.println("文件名不以'spring-context-'开头");
-////        }
-//
-//    }
 
 
 }
