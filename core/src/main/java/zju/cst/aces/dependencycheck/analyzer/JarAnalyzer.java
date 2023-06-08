@@ -794,11 +794,11 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                 FunctionUtil.DIRECTJarsFunctions.put(directdependency.getDisplayFileName(),classfunctionstr);
         }
 
-        for(Dependency thirddependency : ThirdGroupDependencies.values()){
-            String classfunctionstr = FunctionUtil.functionDetect(thirddependency.getActualFilePath().replace('\\','/'),thirddependency.artifactid,true);
-            if(classfunctionstr!= "")
-                FunctionUtil.THIRDJarsFunctions.put(thirddependency.getDisplayFileName(),classfunctionstr);
-        }
+//        for(Dependency thirddependency : ThirdGroupDependencies.values()){
+//            String classfunctionstr = FunctionUtil.functionDetect(thirddependency.getActualFilePath().replace('\\','/'),thirddependency.artifactid,true);
+//            if(classfunctionstr!= "")
+//                FunctionUtil.THIRDJarsFunctions.put(thirddependency.getDisplayFileName(),classfunctionstr);
+//        }
 
 
 
@@ -929,7 +929,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 
 
 
-    public   void topoSort(JSONArray edges, JSONArray nodeEdges, List<Dependency>dependencies) {
+    public   void topoSort(JSONArray nodeEdges, List<Dependency>dependencies) {
 
         try {
 
@@ -966,37 +966,23 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                                 if(isistEdges.get(behalf1)==null){
                                     tempedge.add(behalf2);
 
-
                                     isistEdges.put(behalf1,tempedge);
                                 }else{
                                     isistEdges.get(behalf1).add(behalf2);
                                 }
-                                JSONObject edge = new JSONObject();
-//                            if(isistEdges.get(behalf1)!=null)
-//                                isistEdges.get(dependencies.get(firstindex).Groupname) = new List<String>();
-//                            edge.put("source", behalf1 );
-//                            edge.put("target", behalf2);
-
-                                edge.put("source", firstdependency.Groupname);
-                                if(firstdependency.Groupname==null)                             edge.put("source", firstdependency.getDisplayFileName() );
-
-                                edge.put("target", nextdependency.Groupname);
-                                if(nextdependency.Groupname==null)                             edge.put("target", nextdependency.getDisplayFileName() );
-                                edge.put("mark",0);
-
-                                edges.put(edge);
 
                             }
                         }
                         JSONObject nodeEdge = new JSONObject();
 
-                        nodeEdge.put("sourcenode", firstdependency.getDisplayFileName() );
-                        nodeEdge.put("source", firstdependency.Groupname );
+                        nodeEdge.put("source node", firstdependency.getDisplayFileName() );
+                        nodeEdge.put("source group", firstdependency.Groupname );
+                        nodeEdge.put("source level",firstdependency.level);
 
 
                         nodeEdge.put("targetnode", nextdependency.getDisplayFileName());
-                        nodeEdge.put("target", nextdependency.Groupname );
-                        nodeEdge.put("mark",0);
+                        nodeEdge.put("target group", nextdependency.Groupname );
+                        nodeEdge.put("target level",nextdependency.level);
 
                         nodeEdges.put(nodeEdge);
 

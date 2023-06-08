@@ -248,9 +248,9 @@ public class FunctionUtil {
 
 //        默认先用CHA进行分析
         SootExecutorUtil.setSootEntryPoints(entrances);
-        SootExecutorUtil.doCHAAanalysis();
+//        SootExecutorUtil.doCHAAanalysis();
 
-//        SootExecutorUtil.doFastSparkPointsToAnalysis(new HashMap<>(), CGType.VTA, null);
+        SootExecutorUtil.doFastSparkPointsToAnalysis(new HashMap<>(), CGType.VTA, null);
         CallGraph cg = Scene.v().getCallGraph();
 
 

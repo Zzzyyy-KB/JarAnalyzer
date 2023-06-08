@@ -642,31 +642,31 @@ public class Engine implements FileFilter, AutoCloseable {
             if(analyzer.getName()=="Jar Analyzer"){
                 buildDependencyTree();
 
-//                try {
-//                    JarAnalyzer jarAnalyzer =new JarAnalyzer();
-//
-//                    int index = 0;
-//                    for (Dependency dependency : dependencies
-//                    ) {
-//                        jarAnalyzer.analyzeIntro(dependency, dependencies, index++,MARKFILE);
-//                    }
-//
-//                    jarAnalyzer.detectNPIJar(dependencies);
-//
-//                }
-//                catch (Exception e) {
-//                    e.printStackTrace();
-//                }
+
+                    JarAnalyzer jarAnalyzer =new JarAnalyzer();
+
+                    int index = 0;
+                    for (Dependency dependency : dependencies)
+                        jarAnalyzer.analyzeIntro(dependency, dependencies, index++,MARKFILE);
+
+                //分析孤立jar包
+                    jarAnalyzer.detectNPIJar(dependencies);
+
+
+
 
 
 
             }
-        } catch (InterruptedException e) {
+        }
+        catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throwFatalExceptionCollection("Analysis has been interrupted.", e, exceptions);
         } catch (XmlPullParserException e) {
             throw new RuntimeException(e);
-        } finally {
+        }                 catch (Exception e) {
+            e.printStackTrace();
+        }finally {
             executorService.shutdown();
         }
     }
@@ -961,6 +961,8 @@ public class Engine implements FileFilter, AutoCloseable {
     }
 
 
+
+
     /**
      * 构建依赖树。
      */
@@ -972,8 +974,6 @@ public class Engine implements FileFilter, AutoCloseable {
         JarAnalyzer jarAnalyzer =new JarAnalyzer();
 //
         JSONObject root1 = new JSONObject();
-        JSONObject root2 = new JSONObject();
-        JSONObject root3 = new JSONObject();
         JSONObject root4 = new JSONObject();
 
         JSONArray nodes = new JSONArray();
@@ -981,15 +981,11 @@ public class Engine implements FileFilter, AutoCloseable {
 
 
         String nodePath = "./node.json";
-        String edgePath = "./comboedge.json";
-        String comboPath = "./combo.json";
         String nodEedgePath = "./nodeedge.json";
 
 
         try {
             File file1 = creatSJsonFile(nodePath);
-            File file2 = creatSJsonFile(edgePath);
-            File file3 = creatSJsonFile(comboPath);
             File file4 = creatSJsonFile(nodEedgePath);
 //
 //
@@ -1012,22 +1008,13 @@ public class Engine implements FileFilter, AutoCloseable {
 
                     JSONObject node = new JSONObject();
                     JSONObject combo = new JSONObject();
+
                     node.put("id",  dependency.getDisplayFileName());
                     node.put("level", dependency.level);
-
                     node.put("label", dependency.artifactid);
                     node.put("comboId", dependency.Groupname);
                     node.put("mark", 0);
-//                   if(dependency.level=="own")
-//                       combo.put("comboId","own");
-//                   else if(dependency.level=="direct")
-//                       combo.put("comboId","direct");
-//                   else    if(dependency.level=="third")                     combo.put("comboId","third");
-//                   else combo.put("comboId","four");
-//                   combo.put("")
 
-
-//                    node.put("level", dependency.level);
                     combo.put("label", dependency.Groupname);
                     combo.put("id", dependency.Groupname);
                     combo.put("comboId", dependency.level);
@@ -1062,21 +1049,10 @@ public class Engine implements FileFilter, AutoCloseable {
             root1.put("nodes", nodes);
             writeJsonFile(file1,root1);
 
-            JSONArray edges = new JSONArray();
             JSONArray nodeEdges = new JSONArray();
 
             //加边
-            jarAnalyzer.topoSort(edges,nodeEdges,dependencies);
-
-
-//            root2.put("comboNodeEdges", edges);
-//            writeJsonFile(file2,root2);
-//
-//            root3.put("comboNodes", combos);
-//
-//            writeJsonFile(file3,root3);
-
-
+            jarAnalyzer.topoSort(nodeEdges,dependencies);
 
 
             root4.put("nodeEdges", nodeEdges);
