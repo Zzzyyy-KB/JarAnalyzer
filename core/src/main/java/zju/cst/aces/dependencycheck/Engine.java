@@ -643,14 +643,15 @@ public class Engine implements FileFilter, AutoCloseable {
                 buildDependencyTree();
 
 
-                    JarAnalyzer jarAnalyzer =new JarAnalyzer();
+                JarAnalyzer jarAnalyzer =new JarAnalyzer();
 
-                    int index = 0;
-                    for (Dependency dependency : dependencies)
-                        jarAnalyzer.analyzeIntro(dependency, dependencies, index++,MARKFILE);
+                int index = 0;
+                for (Dependency dependency : dependencies
+                ) {
+                    jarAnalyzer.analyzeIntro(dependency, dependencies, index++,MARKFILE);
+                }
 
-                //分析孤立jar包
-                    jarAnalyzer.detectNPIJar(dependencies);
+                jarAnalyzer.detectNPIJar(dependencies);
 
 
 

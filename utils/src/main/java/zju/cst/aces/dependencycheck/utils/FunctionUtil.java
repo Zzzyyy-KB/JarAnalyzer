@@ -177,6 +177,8 @@ public class FunctionUtil {
                         System.out.println("一方库Jar包: " + ownjar + " -> 孤立Jar包: " + npijar);
                         System.out.println("一方库Method: " + own_class_method + " -> Method: " + npi_class_method);
                         flag = true;
+                        return flag;
+
                     }
                 }
 
@@ -192,41 +194,26 @@ public class FunctionUtil {
                         System.out.println("二方库Jar包: " + directjar + " -> 孤立Jar包: " + npijar);
                         System.out.println("二方库Method: " + direct_class_method + " -> Method: " + npi_class_method);
                         flag = true;
+                        return flag;
+
                     }
                 }
             }
             for (String thirdjar : THIRDJarsFunctions.keySet()) {
-//                if(!Intro_relations.contains(new Pair<>(directjar,npijar))){
-//                    continue;
-//                }
+
                 String third_class_methodstr = THIRDJarsFunctions.get(thirdjar);
                 String[] third_class_methods = third_class_methodstr.split(";");
                 for (String third_class_method : third_class_methods) {
                     if (third_class_method.equals(edge.src().getDeclaringClass().getName() + "_" + edge.src().getName())) {
-//                        if(!Intro_relations.contains(new Pair<>(directjar,npijar))) {
-//                            break;
-//                        }
-//                        Intro_relations.add(new Pair<>("二方库Jar包: "+directjar,npijar));
-                        pathJars.add(thirdjar);
-                        pathMethods.add(edge.src().getDeclaringClass().getName() + "_" + edge.src().getName());
-//                        System.out.println("三方库Jar包: " + thirdjar + " -> 孤立Jar包: " + npijar);
-//                        System.out.println("三方库Method: " + third_class_method + " -> Method: " + npi_class_method);
+
+
+                        System.out.println("三方库Jar包: " + thirdjar + " -> 孤立Jar包: " + npijar);
+                        System.out.println("三方库Method: " + third_class_method + " -> Method: " + npi_class_method);
+                        flag =true;
+                        return flag;
                     }
                 }
             }
-            if (flag) {
-                for (int i = 0; i<pathMethods.size(); i++
-                ) {
-                    System.out.println("中间三方包："+pathJars.get(i));
-
-                    System.out.println("中间三方包函数："+pathMethods.get(i));
-                    pathMethods = new ArrayList<>();
-                    pathJars = new ArrayList<>();
-                }
-                return flag;
-            }
-
-            flag = findSourceMethod(edge.src(), newCg, npi_class_method, npijar, flag);
 
 
 
@@ -256,7 +243,7 @@ public class FunctionUtil {
 
         SootExecutorUtil.setSootEntryPoints(entrances);
 
-        SootExecutorUtil.doFastSparkPointsToAnalysis(new HashMap<>(), CGType.VTA, null);
+        SootExecutorUtil.doCHAAanalysis();
         CallGraph cg = Scene.v().getCallGraph();
 
 
@@ -342,11 +329,11 @@ public class FunctionUtil {
                         tag = findSourceMethod(method, newCg, npi_class_method, npijar, tag);
                         if (tag) {
 
-                                for (Iterator<Edge> itetrator = newCg.edgesOutOf(method); itetrator.hasNext(); ) {
-                                    Edge edge = itetrator.next();
+                            for (Iterator<Edge> itetrator = newCg.edgesOutOf(method); itetrator.hasNext(); ) {
+                                Edge edge = itetrator.next();
 
-                                    System.out.println("source method:" + edge.tgt().getDeclaringClass().getName() + "_" + edge.tgt().getName());
-                                }
+                                System.out.println("source method:" + edge.tgt().getDeclaringClass().getName() + "_" + edge.tgt().getName());
+                            }
                         }
                         break;
 

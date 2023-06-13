@@ -107,7 +107,6 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
             "Sun Java System Application Server");
 
 
-
     /**
      * A list of elements in the manifest to ignore.
      */
@@ -222,7 +221,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
     /**
      * The parent directory for the individual directories per archive.
      */
-    public static  File tempFileLocation = null;
+    public static File tempFileLocation = null;
     /**
      * Maven group id and artifact ids must match the regex to be considered
      * valid. In some cases ODC cannot interpolate a variable and it produced
@@ -231,39 +230,37 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
     private static final String VALID_NAME = "^[A-Za-z0-9_\\-.]+$";
 
     private String ownname = "";
-    private  String directname ="";
+    private String directname = "";
 
     //构建dependency tree所需变量
-    static int degree[] = new int[1000];
-
+    int degree[] = new int[1000];
 
 
     //数组长度需要改变
-    static int [][]adj =new int[500][500] ;
+    static int[][] adj = new int[500][500];
 
-    HashMap<String,ArrayList<String>> isistEdges = new HashMap<>();
-    public static HashMap<String,String> GroupBehalfNode = new HashMap<>();
+    HashMap<String, ArrayList<String>> isistEdges = new HashMap<>();
+    public static HashMap<String, String> GroupBehalfNode = new HashMap<>();
 
-    public static HashMap<String,String> name_Group = new HashMap<>();
+    public static HashMap<String, String> name_Group = new HashMap<>();
 
-    public static HashMap<String,Dependency> name_dependency = new HashMap<>();
+    public static HashMap<String, Dependency> name_dependency = new HashMap<>();
 
 
-
-    public static HashMap<Integer,Dependency>OwnGroupDependencies = new HashMap<>() ;
+    public static HashMap<Integer, Dependency> OwnGroupDependencies = new HashMap<>();
 
     //
-    public static HashMap<Integer,Dependency>DirectGroupDependencies = new HashMap<>() ;
+    public static HashMap<Integer, Dependency> DirectGroupDependencies = new HashMap<>();
 
-    public static HashMap<Integer,Dependency>ThirdGroupDependencies = new HashMap<>() ;
+    public static HashMap<Integer, Dependency> ThirdGroupDependencies = new HashMap<>();
 
-    public static HashMap<Dependency,Dependency>NoPomJarIntroFromPom = new HashMap<>() ;
+    public static HashMap<Dependency, Dependency> NoPomJarIntroFromPom = new HashMap<>();
 
-    public static HashMap<Integer,Dependency>NPIJars = new HashMap<>() ;
-
+    public static HashMap<Integer, Dependency> NPIJars = new HashMap<>();
 
 
     //<editor-fold defaultstate="collapsed" desc="All standard implmentation details of Analyzer">
+
     /**
      * Returns the FileFilter.
      *
@@ -331,12 +328,12 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
      * checksums to identify the correct CPE information.
      *
      * @param dependency the dependency to analyze.
-     * @param engine the engine that is scanning the dependencies
+     * @param engine     the engine that is scanning the dependencies
      * @throws AnalysisException is thrown if there is an error reading the JAR
-     * file.
+     *                           file.
      */
     @Override
-    public void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException{
+    public void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
         final List<ClassNameInformation> classNames = collectClassNames(dependency);
         final String fileName = dependency.getFileName().toLowerCase();
 
@@ -379,7 +376,6 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
         }
 
 
-
     }
 
     /**
@@ -389,7 +385,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
      * it returns false.
      *
      * @param dependency the dependency to check if it's a macOS meta-data file
-     * @param engine the engine that is scanning the dependencies
+     * @param engine     the engine that is scanning the dependencies
      * @return whether or not the given dependency appears to be a macOS
      * meta-data file
      */
@@ -409,7 +405,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
      * returns false.
      *
      * @param dependencies the dependencies to search within
-     * @param fileName the filename to search for
+     * @param fileName     the filename to search for
      * @return whether or not the given dependencies contain a dependency with
      * the given filename
      */
@@ -451,33 +447,33 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
         }
         return false;
     }
-    public  void analyzeIntro(Dependency dependency, List<Dependency> dcDependencies, int index, String MARKFILE)throws XmlPullParserException{
-        if(index ==0){
+
+    public void analyzeIntro(Dependency dependency, List<Dependency> dcDependencies, int index, String MARKFILE) throws XmlPullParserException {
+        if (index == 0) {
             try {
                 File file = new File(MARKFILE);
                 String content = org.apache.commons.io.FileUtils.readFileToString(file, "UTF-8");
                 JSONObject jsonObject = new JSONObject(content);
                 ownname = jsonObject.getString("一方库名");
                 directname = jsonObject.getString("二方库前缀");
-            }
-            catch (JSONException e) {
+            } catch (JSONException e) {
                 throw new RuntimeException(e);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
         //对shaded jar包操作
-        if(dependency.getDisplayFileName().contains("shaded")){
+        if (dependency.getDisplayFileName().contains("shaded")) {
             //影响版本的jar包
-            String influenceJarName = dependency.getDisplayFileName().substring(0,org.apache.commons.lang.StringUtils.ordinalIndexOf(dependency.getDisplayFileName(),"(",1)-1);
+            String influenceJarName = dependency.getDisplayFileName().substring(0, org.apache.commons.lang.StringUtils.ordinalIndexOf(dependency.getDisplayFileName(), "(", 1) - 1);
 
 
-            dependency.Groupname=name_Group.get(influenceJarName);
-            if(dependency.artifactid == null) {
+            dependency.Groupname = name_Group.get(influenceJarName);
+            if (dependency.artifactid == null) {
                 dependency.artifactid = dependency.getDisplayFileName();
 //                System.out.println(dependency.getDisplayFileName());
             }
-            dependency.level =name_dependency.get(influenceJarName).level;
+            dependency.level = name_dependency.get(influenceJarName).level;
 
         }
 
@@ -486,9 +482,8 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
             final List<String> pomEntries = retrievePomListing(jar);
 
 
-            if(pomEntries.size()==0)
+            if (pomEntries.size() == 0)
                 return;
-
 
 
             for (String path : pomEntries) {
@@ -504,49 +499,45 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                     pom.processProperties(pomProperties);
 
                     String groupid = pom.getGroupId();
-                    if(groupid==null||groupid.equals("${project.parent.groupId}")) groupid= pom.getParentGroupId();
+                    if (groupid == null || groupid.equals("${project.parent.groupId}"))
+                        groupid = pom.getParentGroupId();
 
-                    if(dependency.artifactid ==null) {
+                    if (dependency.artifactid == null) {
                         dependency.artifactid = pom.getArtifactId();
                         dependency.Groupname = groupid;
 
                     }
                     //分组
 
-                    name_Group.put(dependency.getFileName(),groupid);
-                    name_dependency.put(dependency.getFileName(),dependency);
+                    name_Group.put(dependency.getFileName(), groupid);
+                    name_dependency.put(dependency.getFileName(), dependency);
                     String artifactid = pom.getArtifactId();
 
 //                    FunctionUtil.ClassPaths = FunctionUtil.ClassPaths.concat(File.pathSeparatorChar+dependency.getActualFilePath());
                     //用第一个pom文件的artifactid 就是本项目的artifactid（启发式）
 
 
-
-                    if(GroupBehalfNode.get(groupid)==null)
-                        GroupBehalfNode.put(groupid,dependency.getDisplayFileName());
+                    if (GroupBehalfNode.get(groupid) == null)
+                        GroupBehalfNode.put(groupid, dependency.getDisplayFileName());
 
                     //读取一方库、二方库
 
 
                     //判断一方、二方、三方包
-                    if(dependency.Groupname.equals(ownname)){
+                    if (dependency.Groupname.equals(ownname)) {
                         dependency.level = "own";
-                        OwnGroupDependencies.put(OwnGroupDependencies.size(),dependency);
+                        OwnGroupDependencies.put(OwnGroupDependencies.size(), dependency);
                     }
                     //第二个.的子串 eg com.hundson.jrecloud
 //                else if(dependency.Groupname.contains((dcDependencies.get(0).Groupname.substring(0,org.apache.commons.lang.StringUtils.ordinalIndexOf(dcDependencies.get(0).Groupname,".",2))))){
-                    else if(dependency.Groupname.contains(directname)){
+                    else if (dependency.Groupname.contains(directname)) {
                         dependency.level = "direct";
-                        DirectGroupDependencies.put(DirectGroupDependencies.size(),dependency);
-                    }
-
-                    else {
+                        DirectGroupDependencies.put(DirectGroupDependencies.size(), dependency);
+                    } else {
                         dependency.level = "third";
-                        ThirdGroupDependencies.put(ThirdGroupDependencies.size(),dependency);
+                        ThirdGroupDependencies.put(ThirdGroupDependencies.size(), dependency);
 
                     }
-
-
 
 
                     //找边
@@ -560,60 +551,59 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                     List<org.apache.maven.model.Dependency> dependencies = model.getDependencies();
 
 
-                    if (!(dependencies.toString() =="[]")){
-                        String[] array1= dependencies.toString().split("Dependency");
-                        String artifactIdtemp="",groupIdtemp="",versiontemp = "";
-                        for(int i=1;i<array1.length;i++){
+                    if (!(dependencies.toString() == "[]")) {
+                        String[] array1 = dependencies.toString().split("Dependency");
+                        String artifactIdtemp = "", groupIdtemp = "", versiontemp = "";
+                        for (int i = 1; i < array1.length; i++) {
                             String str = array1[i];
 
 
-                            if(str.contains("artifactId=")){
-                                artifactIdtemp = str.substring(str.indexOf("artifactId=")+11, org.apache.commons.lang.StringUtils.ordinalIndexOf(str,",",2));
+                            if (str.contains("artifactId=")) {
+                                artifactIdtemp = str.substring(str.indexOf("artifactId=") + 11, org.apache.commons.lang.StringUtils.ordinalIndexOf(str, ",", 2));
 
-                                if(artifactIdtemp==null)
+                                if (artifactIdtemp == null)
                                     continue;
 
 
-                                if(str.contains("groupId="))
-                                {groupIdtemp =str.substring(str.indexOf("groupId=")+8, org.apache.commons.lang.StringUtils.ordinalIndexOf(str,",",1));}
-
-                                if(groupIdtemp.equals("${project.groupId}")){
-                                    if(pom.getGroupId() ==null)
-                                        groupIdtemp=pom.getParentGroupId();
-                                    else groupIdtemp=pom.getGroupId();
+                                if (str.contains("groupId=")) {
+                                    groupIdtemp = str.substring(str.indexOf("groupId=") + 8, org.apache.commons.lang.StringUtils.ordinalIndexOf(str, ",", 1));
                                 }
 
-                                if(str.contains("version=")){
-                                    versiontemp = str.substring(str.indexOf("version=")+8, org.apache.commons.lang.StringUtils.ordinalIndexOf(str,",",3));
-                                    if(versiontemp.equals("${project.version}")){
-                                        if(model.getVersion()==null)
+                                if (groupIdtemp.equals("${project.groupId}")) {
+                                    if (pom.getGroupId() == null)
+                                        groupIdtemp = pom.getParentGroupId();
+                                    else groupIdtemp = pom.getGroupId();
+                                }
+
+                                if (str.contains("version=")) {
+                                    versiontemp = str.substring(str.indexOf("version=") + 8, org.apache.commons.lang.StringUtils.ordinalIndexOf(str, ",", 3));
+                                    if (versiontemp.equals("${project.version}")) {
+                                        if (model.getVersion() == null)
                                             versiontemp = model.getParent().getVersion();
                                         else versiontemp = model.getVersion();
 
-                                    }
-                                    else if(versiontemp.equals("${project.parent.version}"))
+                                    } else if (versiontemp.equals("${project.parent.version}"))
                                         versiontemp = model.getParent().getVersion();
 
                                 }
-                                String d_name = groupIdtemp+":"+artifactIdtemp;
+                                String d_name = groupIdtemp + ":" + artifactIdtemp;
 
 //                                System.out.println(d_name+":"+versiontemp);
 
                                 //
-                                if(artifactIdtemp.contains("${")){
+                                if (artifactIdtemp.contains("${")) {
                                     continue;
                                 }
 
 
-
                                 //标记pom引入边
-                                int k=0;
+                                int k = 0;
 
 
                                 /*
                                  *log4j
                                  * */
-                                for (Dependency dep: dcDependencies
+                                for (Dependency dep : dcDependencies
                                 ) {
 //                                    if(artifactIdtemp.equals("log4j")&&artifactIdtemp.contains("log4j")){
 //                                        if(dep.getName()!=null&&dep.getName().contains("log4j")){
@@ -622,8 +612,8 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 //                                        }
 //                                    }
 
-                                    if(dep.getName()!=null&&dep.getName().equals(d_name)){
-                                        adj[index][k]=1;
+                                    if (dep.getName() != null && dep.getName().equals(d_name)) {
+                                        adj[index][k] = 1;
                                         degree[k]++;
 
                                     }
@@ -638,20 +628,20 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                                      *
                                      * */
 
-                                    else if(dep.getFileName()!= null && dep.getFileName().matches("(\\S.)*"+artifactIdtemp+"-?\\d.*")){
+                                    else if (dep.getFileName() != null && dep.getFileName().matches("(\\S.)*" + artifactIdtemp + "-?\\d.*")) {
 
 //                                            System.out.println(dependency.getDisplayFileName()+"-----》"+dep.getDisplayFileName());
                                         dep.Groupname = groupIdtemp;
                                         dep.artifactid = artifactIdtemp;
-                                            adj[index][k] = 1;
-                                            degree[k]++;
+                                        adj[index][k] = 1;
+                                        degree[k]++;
 
                                     }
 
                                     /*
-                                    * spring-boot-starter-XXX
-                                    *
-                                    * */
+                                     * spring-boot-starter-XXX
+                                     *
+                                     * */
 //                                    detectDepRelateSpringbootStarter();
 
 //                                    else if(d_name.equals("spring-boot-actuator")&&
@@ -709,26 +699,22 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                                 }
 
 
-
                             }
 
 
                         }
 
 
-
-
                     }
 
 
-                } catch(ZipException e){
+                } catch (ZipException e) {
                     throw new RuntimeException(e);
-                }catch (FileNotFoundException e) {
+                } catch (FileNotFoundException e) {
                     throw new RuntimeException(e);
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     throw new RuntimeException(e);
-                }catch(AnalysisException e){
+                } catch (AnalysisException e) {
                     throw new RuntimeException(e);
 
                 }
@@ -736,8 +722,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
             }
 
 
-        }
-        catch (IOException ex) {
+        } catch (IOException ex) {
 //            LOGGER.warn("Unable to read JarFile '{}'.", dependency.getActualFilePath());
 //            LOGGER.trace("", ex);
         }
@@ -745,37 +730,37 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
     }
 
 
+    public void detectNPIJar(List<Dependency> dcDependencies) {
 
-    public void detectNPIJar(List<Dependency> dcDependencies){
-
-        for(int i = 0; i<dcDependencies.size(); i++){
-            FunctionUtil.ClassPaths = FunctionUtil.ClassPaths.concat(dcDependencies.get(i).getActualFilePath().replace('\\','/')+File.pathSeparatorChar);
+        for (int i = 0; i < dcDependencies.size(); i++) {
+            FunctionUtil.ClassPaths = FunctionUtil.ClassPaths.concat(dcDependencies.get(i).getActualFilePath().replace('\\', '/') + File.pathSeparatorChar);
 
             //排除一方、二方库以及war包后的 非pom引入jar包
-            if(dcDependencies.get(i).level!="own"&&dcDependencies.get(i).level!="direct") {
+            if (dcDependencies.get(i).level != "own" && dcDependencies.get(i).level != "direct") {
 
                 if (degree[i] == 0) {
-                    Dependency dependency =  dcDependencies.get(i);
+                    Dependency dependency = dcDependencies.get(i);
 //                    if(dependency.level =="direct"){
 //                        System.out.println(dependency.getDisplayFileName());
 //                    }
-                    if(!dependency.getDisplayFileName().contains("shaded")){
-                    NPIJars.put(NPIJars.size(), dependency);
-                    System.out.println("NPI JAR:" + dependency.getDisplayFileName());
+                    if (!dependency.getDisplayFileName().contains("shaded")) {
+                        NPIJars.put(NPIJars.size(), dependency);
+                        System.out.println("NPI JAR:" + dependency.getDisplayFileName());
                     }
                 }
             }
         }
 
-        //获取NPIjar的所有函数名int i =0;
-        for(Dependency NPIJar : NPIJars.values()){
-            String classfunctionstr = FunctionUtil.functionDetect(NPIJar.getActualFilePath().replace('\\','/'),NPIJar.artifactid,false);
-            if(classfunctionstr!= "") {
-                FunctionUtil.NPIJarsFunctions.put(NPIJar.getDisplayFileName(), classfunctionstr);
+        if (NPIJars.size() == 0) {
+            System.out.println("没有发现孤立jar包");
+        } else {
+            //获取NPIjar的所有函数名int i =0;
+            for (Dependency NPIJar : NPIJars.values()) {
+                String classfunctionstr = FunctionUtil.functionDetect(NPIJar.getActualFilePath().replace('\\', '/'), NPIJar.artifactid, false);
+                if (classfunctionstr != "") {
+                    FunctionUtil.NPIJarsFunctions.put(NPIJar.getDisplayFileName(), classfunctionstr);
+                } else System.out.println("classfunctionstr为空的孤立Jar包: " + NPIJar.getDisplayFileName());
             }
-            else System.out.println("classfunctionstr为空的孤立Jar包: "+NPIJar.getDisplayFileName());
-//            else System.out.println(NPIJar.getDisplayFileName()+"            "+i++);
-        }
 //
 //
 //
@@ -783,32 +768,38 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 //
 //
 //        //对一方、二方库jar看是否有调用的关系
-        for(Dependency owndependency : OwnGroupDependencies.values()){
-            String classfunctionstr = FunctionUtil.functionDetect(owndependency.getActualFilePath().replace('\\','/'),owndependency.artifactid,true);
-            if(classfunctionstr!= "")
-                FunctionUtil.OWNJarsFunctions.put(owndependency.getDisplayFileName(),classfunctionstr);
+            for (Dependency owndependency : OwnGroupDependencies.values()) {
+                String classfunctionstr = FunctionUtil.functionDetect(owndependency.getActualFilePath().replace('\\', '/'), owndependency.artifactid, true);
+                if (classfunctionstr != "")
+                    FunctionUtil.OWNJarsFunctions.put(owndependency.getDisplayFileName(), classfunctionstr);
+            }
+            for (Dependency directdependency : DirectGroupDependencies.values()) {
+                String classfunctionstr = FunctionUtil.functionDetect(directdependency.getActualFilePath().replace('\\', '/'), directdependency.artifactid, true);
+                if (classfunctionstr != "")
+                    FunctionUtil.DIRECTJarsFunctions.put(directdependency.getDisplayFileName(), classfunctionstr);
+            }
+
+
+            for (Dependency thirddependency : ThirdGroupDependencies.values()) {
+                int f =0;
+                for (Dependency npijar: NPIJars.values()
+                ) {
+                    if(thirddependency==npijar){
+                        f=1;
+                        break;
+                    }
+
+
+                }
+                if(f==1) continue;
+                String classfunctionstr = FunctionUtil.functionDetect(thirddependency.getActualFilePath().replace('\\', '/'), thirddependency.artifactid, true);
+                if (classfunctionstr != "")
+                    FunctionUtil.THIRDJarsFunctions.put(thirddependency.getDisplayFileName(), classfunctionstr);
+            }
+            FunctionUtil.CFGBuild();
         }
-        for(Dependency directdependency : DirectGroupDependencies.values()){
-            String classfunctionstr = FunctionUtil.functionDetect(directdependency.getActualFilePath().replace('\\','/'),directdependency.artifactid,true);
-            if(classfunctionstr!= "")
-                FunctionUtil.DIRECTJarsFunctions.put(directdependency.getDisplayFileName(),classfunctionstr);
-        }
-
-//        for(Dependency thirddependency : ThirdGroupDependencies.values()){
-//            String classfunctionstr = FunctionUtil.functionDetect(thirddependency.getActualFilePath().replace('\\','/'),thirddependency.artifactid,true);
-//            if(classfunctionstr!= "")
-//                FunctionUtil.THIRDJarsFunctions.put(thirddependency.getDisplayFileName(),classfunctionstr);
-//        }
-
-
-
-        FunctionUtil.CFGBuild();
-
 
     }
-
-
-
 
 
     /**
@@ -817,15 +808,14 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
      * the strings contained within the pom.properties if one exists.
      *
      * @param dependency the dependency being analyzed
-     * @param classes a collection of class name information
-     * @param engine the analysis engine, used to add additional dependencies
-     * @throws AnalysisException is thrown if there is an exception parsing the
-     * pom
+     * @param classes    a collection of class name information
+     * @param engine     the analysis engine, used to add additional dependencies
      * @return whether or not evidence was added to the dependency
+     * @throws AnalysisException is thrown if there is an exception parsing the
+     *                           pom
      */
 
     protected boolean analyzePOM(Dependency dependency, List<ClassNameInformation> classes, Engine engine) throws AnalysisException {
-
 
 
         //TODO add breakpoint on groov-all to find out why commons-cli is not added as a new dependency?
@@ -844,14 +834,14 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 
 
             //没有pom文件的
-            if(pomEntries.size()==0){
+            if (pomEntries.size() == 0) {
 //                GroupBehalfNode.put(dependency.getName(),dependency.getName());
 
                 //没有pom文件的默认放在第四层
-                dependency.Groupname=dependency.getFileName();
+                dependency.Groupname = dependency.getFileName();
                 dependency.artifactid = dependency.getFileName();
-                dependency.level="four";
-                GroupBehalfNode.put(dependency.Groupname,dependency.getFileName());
+                dependency.level = "four";
+                GroupBehalfNode.put(dependency.Groupname, dependency.getFileName());
             }
 
             for (String path : pomEntries) {
@@ -862,8 +852,6 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                     final File pomFile = extractPom(path, jar);
                     final Model pom = PomUtils.readPom(pomFile);
                     pom.processProperties(pomProperties);
-
-
 
 
                     final String artifactId = new File(path).getParentFile().getName();
@@ -889,7 +877,8 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                         String groupId = pom.getGroupId();
                         String version = pom.getVersion();
 
-                        if(groupId==null||groupId.equals("${project.parent.groupId}")) groupId= pom.getParentGroupId();
+                        if (groupId == null || groupId.equals("${project.parent.groupId}"))
+                            groupId = pom.getParentGroupId();
 
                         if (version == null) {
                             version = pom.getParentVersion();
@@ -902,7 +891,6 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                             newDependency.setName(String.format("%s:%s", groupId, pom.getArtifactId()));
                             newDependency.setPackagePath(String.format("%s:%s:%s", groupId, pom.getArtifactId(), version));
                         }
-
 
 
                         newDependency.setDisplayFileName(String.format("%s (shaded: %s)", dependency.getDisplayFileName(), newDependency.getPackagePath()));
@@ -926,26 +914,22 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
     }
 
 
-
-
-
-    public   void topoSort(JSONArray nodeEdges, List<Dependency>dependencies) {
+    public void topoSort(JSONArray nodeEdges, List<Dependency> dependencies) {
 
         try {
-
-
+            int[] degree1 = degree;
             Queue<Integer> queue = new LinkedList<>();
             for (int i = 0; i < dependencies.size(); i++) {
-                if (degree[i] == 0) {
+                if (degree1[i] == 0) {
                     queue.add(i);
                 }
             }
 
             while (!queue.isEmpty()) {
                 int firstindex = queue.poll();
-                Dependency firstdependency =dependencies.get(firstindex);
+                Dependency firstdependency = dependencies.get(firstindex);
 
-                ArrayList<String>tempedge = new ArrayList<>();
+                ArrayList<String> tempedge = new ArrayList<>();
 
                 for (int i = 0; i < dependencies.size(); i++) {
                     if (adj[firstindex][i] == 1) {
@@ -962,12 +946,12 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                         if (behalf2 == null) behalf2 = nextdependency.getDisplayFileName();
                         if (!behalf1.equals(behalf2)) {
 
-                            if (isistEdges.get(behalf1)==null||!isistEdges.get(behalf1).contains(behalf2)){
-                                if(isistEdges.get(behalf1)==null){
+                            if (isistEdges.get(behalf1) == null || !isistEdges.get(behalf1).contains(behalf2)) {
+                                if (isistEdges.get(behalf1) == null) {
                                     tempedge.add(behalf2);
 
-                                    isistEdges.put(behalf1,tempedge);
-                                }else{
+                                    isistEdges.put(behalf1, tempedge);
+                                } else {
                                     isistEdges.get(behalf1).add(behalf2);
                                 }
 
@@ -975,20 +959,16 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                         }
                         JSONObject nodeEdge = new JSONObject();
 
-                        nodeEdge.put("source node", firstdependency.getDisplayFileName() );
-                        nodeEdge.put("source group", firstdependency.Groupname );
-                        nodeEdge.put("source level",firstdependency.level);
+                        nodeEdge.put("source node", firstdependency.getDisplayFileName());
 
 
-                        nodeEdge.put("targetnode", nextdependency.getDisplayFileName());
-                        nodeEdge.put("target group", nextdependency.Groupname );
-                        nodeEdge.put("target level",nextdependency.level);
+                        nodeEdge.put("target node", nextdependency.getDisplayFileName());
 
                         nodeEdges.put(nodeEdge);
 
                     }
-                    degree[i]--;
-                    if (degree[i] == 0) {
+                    degree1[i]--;
+                    if (degree1[i] == 0) {
                         queue.add(i);
                     }
                 }
@@ -1001,13 +981,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
         }
 
 
-
-
-
-
-
     }
-
 
 
     public static String formatJson(String json) {
@@ -1103,7 +1077,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
      * a sibling pom.properties if one exists.
      *
      * @param path the path to the pom.xml within the JarFile
-     * @param jar the JarFile to load the pom.properties from
+     * @param jar  the JarFile to load the pom.properties from
      * @return a Properties object or null if no pom.properties was found
      */
     private Properties retrievePomProperties(String path, final JarFile jar) {
@@ -1150,10 +1124,10 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
      * Retrieves the specified POM from a jar.
      *
      * @param path the path to the pom.xml file within the jar file
-     * @param jar the jar file to extract the pom from
+     * @param jar  the jar file to extract the pom from
      * @return returns the POM file
      * @throws AnalysisException is thrown if there is an exception extracting
-     * the file
+     *                           the file
      */
     private File extractPom(String path, JarFile jar) throws AnalysisException {
         final File tmpDir = getNextTempDirectory();
@@ -1176,10 +1150,10 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
      * Sets evidence from the pom on the supplied dependency.
      *
      * @param dependency the dependency to set data on
-     * @param pom the information from the pom
-     * @param classes a collection of ClassNameInformation - containing data
-     * about the fully qualified class names within the JAR file being analyzed
-     * @param isMainPom a flag indicating if this is the primary pom.
+     * @param pom        the information from the pom
+     * @param classes    a collection of ClassNameInformation - containing data
+     *                   about the fully qualified class names within the JAR file being analyzed
+     * @param isMainPom  a flag indicating if this is the primary pom.
      * @return true if there was evidence within the pom that we could use;
      * otherwise false
      */
@@ -1392,10 +1366,10 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
      * are found they are stored in the packageVendor and packageProduct
      * hashSets.
      *
-     * @param classNames a list of class names
-     * @param dependency a dependency to analyze
+     * @param classNames            a list of class names
+     * @param dependency            a dependency to analyze
      * @param addPackagesAsEvidence a flag indicating whether or not package
-     * names should be added as evidence.
+     *                              names should be added as evidence.
      */
     protected void analyzePackageNames(List<ClassNameInformation> classNames,
                                        Dependency dependency, boolean addPackagesAsEvidence) {
@@ -1438,7 +1412,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
      * Class</li> </ul>
      * However, all but a handful of specific entries are read in.
      *
-     * @param dependency A reference to the dependency
+     * @param dependency       A reference to the dependency
      * @param classInformation a collection of class information
      * @return whether evidence was identified parsing the manifest
      * @throws IOException if there is an issue reading the JAR file
@@ -1624,10 +1598,10 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
      * <ul><li>"such as"</li><li>"like "</li><li>"will use "</li><li>"* uses
      * "</li></ul>
      *
-     * @param dependency a dependency
+     * @param dependency  a dependency
      * @param description the description
-     * @param source the source of the evidence
-     * @param key the "name" of the evidence
+     * @param source      the source of the evidence
+     * @param key         the "name" of the evidence
      * @return if the description is trimmed, the trimmed version is returned;
      * otherwise the original description is returned
      */
@@ -1683,7 +1657,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
     /**
      * Adds a license to the given dependency.
      *
-     * @param d a dependency
+     * @param d       a dependency
      * @param license the license
      */
     private void addLicense(Dependency d, String license) {
@@ -1706,7 +1680,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
             if (file.isFile()) {
                 boolean result = file.delete();
                 // 限制循环次数，避免死循环
-                for(i = 0; !result && i++ < 10; result = file.delete()) {
+                for (i = 0; !result && i++ < 10; result = file.delete()) {
                     // 垃圾回收
                     System.gc();
                 }
@@ -1717,7 +1691,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
             // file 是目录
             File[] files = file.listFiles();
             if (null != files) {
-                for(i = 0; i < files.length; ++i) {
+                for (i = 0; i < files.length; ++i) {
                     deleteFileOrDirectory(files[i]);
                 }
             }
@@ -1729,21 +1703,20 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
     }
 
 
-
     /**
      * Initializes the JarAnalyzer.
      *
      * @param engine a reference to the dependency-check engine
      * @throws InitializationException is thrown if there is an exception
-     * creating a temporary directory
+     *                                 creating a temporary directory
      */
     @Override
     public void prepareFileTypeAnalyzer(Engine engine) throws InitializationException {
         try {
             final File baseDir = getSettings().getTempDirectory();
             tempFileLocation = File.createTempFile("check", "tmp", baseDir);
-            if ( !tempFileLocation.delete()&&!deleteFileOrDirectory(tempFileLocation)
-) {
+            if (!tempFileLocation.delete() && !deleteFileOrDirectory(tempFileLocation)
+            ) {
                 final String msg = String.format("Unable to delete temporary file '%s'.", tempFileLocation.getAbsolutePath());
                 setEnabled(false);
                 throw new InitializationException(msg);
@@ -1766,7 +1739,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
     public void closeAnalyzer() {
         if (tempFileLocation != null && tempFileLocation.exists()) {
             LOGGER.debug("Attempting to delete temporary files from `{}`", tempFileLocation.toString());
-            final boolean success = FileUtils.delete(tempFileLocation)||deleteFileOrDirectory(tempFileLocation);
+            final boolean success = FileUtils.delete(tempFileLocation) || deleteFileOrDirectory(tempFileLocation);
             if (!success && tempFileLocation.exists()) {
                 final String[] l = tempFileLocation.list();
                 if (l != null && l.length > 0) {
@@ -1781,7 +1754,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
      * Determines if the key value pair from the manifest is for an "import"
      * type entry for package names.
      *
-     * @param key the key from the manifest
+     * @param key   the key from the manifest
      * @param value the value from the manifest
      * @return true or false depending on if it is believed the entry is an
      * "import" entry
@@ -1827,10 +1800,10 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
      * name.
      *
      * @param classNames a list of class names
-     * @param vendor HashMap of possible vendor names from package names (e.g.
-     * owasp)
-     * @param product HashMap of possible product names from package names (e.g.
-     * dependencycheck)
+     * @param vendor     HashMap of possible vendor names from package names (e.g.
+     *                   owasp)
+     * @param product    HashMap of possible product names from package names (e.g.
+     *                   dependencycheck)
      */
     private void analyzeFullyQualifiedClassNames(List<ClassNameInformation> classNames,
                                                  Map<String, Integer> vendor, Map<String, Integer> product) {
@@ -1860,7 +1833,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
      * Integer is incremented by 1.
      *
      * @param collection a collection of strings and their occurrence count
-     * @param key the key to add to the collection
+     * @param key        the key to add to the collection
      */
     private void addEntry(Map<String, Integer> collection, String key) {
         if (collection.containsKey(key)) {
@@ -1877,9 +1850,9 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
      * then one source corroborating the value.
      *
      * @param classes a collection of class name information
-     * @param value the value to check to see if it contains a package name
-     * @param dep the dependency to add new entries too
-     * @param type the type of evidence (vendor, product, or version)
+     * @param value   the value to check to see if it contains a package name
+     * @param dep     the dependency to add new entries too
+     * @param type    the type of evidence (vendor, product, or version)
      */
     protected static void addMatchingValues(List<ClassNameInformation> classes, String value, Dependency dep, EvidenceType type) {
         if (value == null || value.isEmpty() || classes == null || classes.isEmpty()) {
@@ -1910,7 +1883,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
      * Simple check to see if the attribute from a manifest is just a package
      * name.
      *
-     * @param key the key of the value to check
+     * @param key   the key of the value to check
      * @param value the value to check
      * @return true if the value looks like a java package name, otherwise false
      */
@@ -1925,7 +1898,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
      * Extracts the license information from the pom and adds it to the
      * dependency.
      *
-     * @param pom the pom object
+     * @param pom        the pom object
      * @param dependency the dependency to add license information too
      */
     public static void extractLicense(Model pom, Dependency dependency) {
@@ -1989,7 +1962,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
          * <code>ClassNameInformation obj = new ClassNameInformation("org/owasp/dependencycheck/analyzer/JarAnalyzer");
          * System.out.println(obj.getName());
          * for (String p : obj.getPackageStructure())
-         *     System.out.println(p);
+         * System.out.println(p);
          * </code>
          * <p>
          * Would result in:</p>
