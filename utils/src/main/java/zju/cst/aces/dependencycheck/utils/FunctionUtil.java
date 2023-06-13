@@ -220,7 +220,8 @@ public class FunctionUtil {
                     System.out.println("中间三方包："+pathJars.get(i));
 
                     System.out.println("中间三方包函数："+pathMethods.get(i));
-
+                    pathMethods = new ArrayList<>();
+                    pathJars = new ArrayList<>();
                 }
                 return flag;
             }
