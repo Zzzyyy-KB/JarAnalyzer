@@ -714,14 +714,14 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 //        //找到一方、二方库jar的所有public函数
         for (Dependency owndependency : OwnGroupDependencies.values()) {
             String classfunctionstr = FunctionUtil.functionDetect(owndependency.getActualFilePath().replace('\\', '/'), owndependency.artifactid, true);
-//            FunctionUtil.findAllSig(owndependency.getActualFilePath().replace('\\', '/'),"own");
+            FunctionUtil.findAllSig(owndependency.getActualFilePath().replace('\\', '/'),"own");
 
             if (classfunctionstr != "")
                 FunctionUtil.OWNJarsFunctions.put(owndependency.getDisplayFileName(), classfunctionstr);
         }
         for (Dependency directdependency : DirectGroupDependencies.values()) {
             String classfunctionstr = FunctionUtil.functionDetect(directdependency.getActualFilePath().replace('\\', '/'), directdependency.artifactid, true);
-//            FunctionUtil.findAllSig(directdependency.getActualFilePath().replace('\\', '/'),"direct");
+            FunctionUtil.findAllSig(directdependency.getActualFilePath().replace('\\', '/'),"direct");
             if (classfunctionstr != "")
                 FunctionUtil.DIRECTJarsFunctions.put(directdependency.getDisplayFileName(), classfunctionstr);
         }
@@ -737,7 +737,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
             }
             if (flag == 1) continue;
             if(!thirddependency.getDisplayFileName().contains("curator-client-4.2.0.jar")) continue;;
-//            FunctionUtil.findAllSig(thirddependency.getActualFilePath().replace('\\', '/'),"third");
+            FunctionUtil.findAllSig(thirddependency.getActualFilePath().replace('\\', '/'),"third");
 
             String classfunctionstr = FunctionUtil.functionDetect(thirddependency.getActualFilePath().replace('\\', '/'), thirddependency.artifactid, true);
             if (classfunctionstr != "")

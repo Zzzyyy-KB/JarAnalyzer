@@ -174,7 +174,7 @@ public class FunctionUtil {
 
     }
 
-    public static void findAllSig(String jarpath,String level) {
+    public static void findAllSig(String jarpath, String level) {
         try {
 
             JarFile jarFile = new JarFile(jarpath);
@@ -193,6 +193,7 @@ public class FunctionUtil {
                     // 创建一个ClassVisitor对象，重写visit方法
                     ClassVisitor classVisitor = new ClassVisitor(Opcodes.ASM8) {
                         String classname = "";
+
                         @Override
                         public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
                             // 打印类的全限定名
@@ -210,17 +211,17 @@ public class FunctionUtil {
                                 final String signature,
                                 final String[] exceptions) {
 
-                                // 保存类的全限定名
-                                switch (level) {
-                                    case "own":
-                                        OWNJarsClassesDeterminer.put(classname,signature);
-                                    case "direct":
-                                        DIRECTJarsClassesDeterminer.put(classname,signature);
-                                    case "third":
-                                        THIRDJarsClassesDeterminer.put(classname,signature);
-                                    case "four":
-                                        NPIJarsClassesDeterminer.put(classname,signature);
-                                }
+                            // 保存类的全限定名
+                            switch (level) {
+                                case "own":
+                                    OWNJarsClassesDeterminer.put(classname, signature);
+                                case "direct":
+                                    DIRECTJarsClassesDeterminer.put(classname, signature);
+                                case "third":
+                                    THIRDJarsClassesDeterminer.put(classname, signature);
+                                case "four":
+                                    NPIJarsClassesDeterminer.put(classname, signature);
+                            }
 
 //                            System.out.println("The fully qualified method name is: " + name);
 //                            System.out.println("The fully qualified method descriptor is: " + descriptor);
@@ -243,13 +244,13 @@ public class FunctionUtil {
                             // 保存类的全限定名
                             switch (level) {
                                 case "own":
-                                    OWNJarsClassesDeterminer.put(classname,signature);
+                                    OWNJarsClassesDeterminer.put(classname, signature);
                                 case "direct":
-                                    DIRECTJarsClassesDeterminer.put(classname,signature);
+                                    DIRECTJarsClassesDeterminer.put(classname, signature);
                                 case "third":
-                                    THIRDJarsClassesDeterminer.put(classname,signature);
+                                    THIRDJarsClassesDeterminer.put(classname, signature);
                                 case "four":
-                                    NPIJarsClassesDeterminer.put(classname,signature);
+                                    NPIJarsClassesDeterminer.put(classname, signature);
                             }
 
                             // 调用父类的visit方法
@@ -283,11 +284,13 @@ public class FunctionUtil {
                     if (own_class_method.equals(edge.src().getDeclaringClass().getName() + "_" + edge.src().getName())) {
                         String clazz = own_class_method.split("_")[0];
                         String cla = npi_class_method.split("_")[0];
-                        if(OWNJarsClassesDeterminer.get(clazz).contains(cla.replace('.','/')))
-                        System.out.println("一方库Jar包: " + ownjar + " -> 孤立Jar包: " + npijar);
-                        System.out.println("一方库Method: " + own_class_method + " -> Method: " + npi_class_method);
-                        flag = true;
-                        return flag;
+                        if (OWNJarsClassesDeterminer.get(clazz).contains(cla)) {
+                            System.out.println("一方库Jar包: " + ownjar + " -> 孤立Jar包: " + npijar);
+                            System.out.println("一方库Method: " + own_class_method + " -> Method: " + npi_class_method);
+
+                            flag = true;
+                            return flag;
+                        }
 
                     }
                 }
@@ -299,13 +302,15 @@ public class FunctionUtil {
                 String[] direct_class_methods = direct_class_methodstr.split(";");
                 for (String direct_class_method : direct_class_methods) {
                     if (direct_class_method.equals(edge.src().getDeclaringClass().getName() + "_" + edge.src().getName())) {
+                        String clazz = direct_class_method.split("_")[0];
+                        String cla = npi_class_method.split("_")[0];
+                        if (DIRECTJarsClassesDeterminer.get(clazz).contains(cla)) {
 
-
-                        System.out.println("二方库Jar包: " + directjar + " -> 孤立Jar包: " + npijar);
-                        System.out.println("二方库Method: " + direct_class_method + " -> Method: " + npi_class_method);
-                        flag = true;
-                        return flag;
-
+                            System.out.println("二方库Jar包: " + directjar + " -> 孤立Jar包: " + npijar);
+                            System.out.println("二方库Method: " + direct_class_method + " -> Method: " + npi_class_method);
+                            flag = true;
+                            return flag;
+                        }
                     }
                 }
             }
@@ -315,12 +320,15 @@ public class FunctionUtil {
                 String[] third_class_methods = third_class_methodstr.split(";");
                 for (String third_class_method : third_class_methods) {
                     if (third_class_method.equals(edge.src().getDeclaringClass().getName() + "_" + edge.src().getName())) {
+                        String clazz = third_class_method.split("_")[0];
+                        String cla = npi_class_method.split("_")[0];
+                        if (THIRDJarsClassesDeterminer.get(clazz).contains(cla)) {
 
-
-                        System.out.println("三方库Jar包: " + thirdjar + " -> 孤立Jar包: " + npijar);
-                        System.out.println("三方库Method: " + third_class_method + " -> Method: " + npi_class_method);
-                        flag = true;
-                        return flag;
+                            System.out.println("三方库Jar包: " + thirdjar + " -> 孤立Jar包: " + npijar);
+                            System.out.println("三方库Method: " + third_class_method + " -> Method: " + npi_class_method);
+                            flag = true;
+                            return flag;
+                        }
                     }
                 }
             }
