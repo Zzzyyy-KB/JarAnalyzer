@@ -6,6 +6,7 @@ import edu.zju.cst.aces.sootex.CGType;
 import edu.zju.cst.aces.sootex.SootExecutorUtil;
 import edu.zju.cst.aces.sootex.callgraph.SimpleCallGraphFilter;
 import javafx.util.Pair;
+import org.apache.commons.io.FileUtils;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -13,11 +14,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import soot.MethodOrMethodContext;
 import soot.Scene;
-import soot.SootClass;
 import soot.SootMethod;
 import soot.jimple.toolkits.callgraph.CallGraph;
 import soot.jimple.toolkits.callgraph.Edge;
-import soot.options.Options;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -100,8 +99,6 @@ public class FunctionUtil {
 
 
             candidateClasses.addAll(ASMParser.loadClasses(new JarFile(jarFile)));
-
-
             String artifactidPart[] = artifactid.split("[-.]");
 
             //孤立jar包只找本项目编写的class
@@ -112,21 +109,21 @@ public class FunctionUtil {
                 ) {
                     //对于package name 按照artifactid进行命名的 ——准确
 
-//                    int i = 0;
+                    int i = 0;
 
-//                    if (!artifactid.contains(".jar")) {
-//                        for (String part : artifactidPart
-//                        ) {
-//                            if (node.name.replace("/", "").contains(part)) {
-//                                i++;
-//                            }
-//                        }
-//
-//                        if (i == artifactidPart.length) {
-//                            targetClasses.add(node);
-//                            continue;
-//                        }
-//                    }
+                    if (!artifactid.contains(".jar")) {
+                        for (String part : artifactidPart
+                        ) {
+                            if (node.name.replace("/", "").contains(part)) {
+                                i++;
+                            }
+                        }
+
+                        if (i == artifactidPart.length) {
+                            targetClasses.add(node);
+                            continue;
+                        }
+                    }
                     //对于不按照artifactid进行命名的 方便后续分类
 
                     String simnames[] = node.name.split("/");
@@ -155,11 +152,10 @@ public class FunctionUtil {
                 for (MethodNode method : clazz.methods) {
                     if (method.access != Opcodes.ACC_PUBLIC)
                         continue;
+                    Classmethodstr = Classmethodstr.concat(clazz.name + "_" + method.name).replace("/", ".") + ";";
+
                     if (flag)
                         entrances.add(getMethodSignature(clazz.name, method.name, method.desc));
-
-
-                    Classmethodstr = Classmethodstr.concat(clazz.name + "_" + method.name).replace("/", ".") + ";";
 
 
                 }
@@ -357,7 +353,6 @@ public class FunctionUtil {
 
         SootExecutorUtil.setSootEntryPoints(entrances);
 
-        int j = 0;
         try {
             SootExecutorUtil.doFastSparkPointsToAnalysis(new HashMap<>(), CGType.VTA, null);
         } catch (Exception e) {
@@ -379,18 +374,6 @@ public class FunctionUtil {
 
         LOGGER.info("Start to dump call graph");
 
-//        for (Iterator<MethodOrMethodContext> iterator = Scene.v().getReachableMethods().listener(); iterator.hasNext(); ) {
-//            SootMethod method = (SootMethod) iterator.next();
-//            NODE_LOGGER.info("{}: {}", method.getBytecodeSignature(), method.getNumber());
-//            for (Iterator<Edge> it = newCg.edgesOutOf(method); it.hasNext(); ) {
-//                Edge edge = it.next();
-//                EDGE_LOGGER.info("{} -> {}", edge.src().getNumber(), edge.tgt().getNumber());
-//
-//            }
-//
-//        }
-
-
     }
 
     public static void findNPIIntro() {
@@ -403,26 +386,6 @@ public class FunctionUtil {
             //过滤简单函数
 
 
-//            for (Iterator<Edge> it = callGraph.edgesOutOf(method); it.hasNext(); ) {
-//                Edge edge = it.next();
-//                //如果该method的下层引用是jdk的同名method
-//                if (edge.tgt().getName() == method.getName() && edge.tgt().getDeclaringClass().getName() != method.getDeclaringClass().getName()) {
-//                    flag = true;
-//                    break;
-//                }
-//            }
-//            if (flag)
-//                continue;
-//            for (Iterator<Edge> it = callGraph.edgesInto(method); it.hasNext(); ) {
-//                Edge edge = it.next();
-//                //如果该method的下层引用是jdk的同名method
-//                if (edge.tgt().getName() == method.getName() && edge.tgt().getDeclaringClass().getName() != method.getDeclaringClass().getName()) {
-//                    flag = true;
-//                    break;
-//                }
-//            }
-//            if (flag)
-//                continue;
             boolean tag = false;
 
             for (Map.Entry<String, String> it : NPIJarsFunctions.entrySet()) {

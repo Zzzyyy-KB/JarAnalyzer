@@ -112,18 +112,7 @@ Copyright (c) 2014 - Jeremy Long. All Rights Reserved.
             <groupId>edu.zju.cst.aces</groupId>
             <artifactId>JavaCallgraph</artifactId>
             <version>1.0-SNAPSHOT</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.soot-oss</groupId>
-                    <artifactId>soot</artifactId>
-                </exclusion>
-            </exclusions>
             <!--            <scope>compile</scope>-->
-        </dependency>
-        <dependency>
-            <groupId>org.soot-oss</groupId>
-            <artifactId>soot</artifactId>
-            <version>4.3.0</version>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>

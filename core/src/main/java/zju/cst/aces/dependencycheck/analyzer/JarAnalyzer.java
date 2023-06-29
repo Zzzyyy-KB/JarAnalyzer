@@ -700,7 +700,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
             FunctionUtil.ClassPaths = FunctionUtil.ClassPaths.concat(dcDependencies.get(i).getActualFilePath().replace('\\', '/') + File.pathSeparatorChar);
 
             //排除一方、二方库以及war包后的 非pom引入jar包
-            if (dcDependencies.get(i).level != "own" && dcDependencies.get(i).level != "direct" && !dcDependencies.get(i).getDisplayFileName().contains(".war")) {
+            if (dcDependencies.get(i).level != "own" && dcDependencies.get(i).level != "direct") {
                 if (degree[i] == 0) {
                     Dependency dependency = dcDependencies.get(i);
                     if (!dependency.getDisplayFileName().contains("shaded")) {
@@ -736,7 +736,6 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                 }
             }
             if (flag == 1) continue;
-            if(!thirddependency.getDisplayFileName().contains("curator-client-4.2.0.jar")) continue;;
             FunctionUtil.findAllSig(thirddependency.getActualFilePath().replace('\\', '/'),"third");
 
             String classfunctionstr = FunctionUtil.functionDetect(thirddependency.getActualFilePath().replace('\\', '/'), thirddependency.artifactid, true);
@@ -744,9 +743,6 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                 FunctionUtil.THIRDJarsFunctions.put(thirddependency.getDisplayFileName(), classfunctionstr);
         }
 
-
-        FunctionUtil.CFGBuild();
-//        //获取NPIjar的所有函数名int i =0;
         for (Dependency NPIJar : NPIJars.values()) {
             String classfunctionstr = FunctionUtil.functionDetect(NPIJar.getActualFilePath().replace('\\', '/'), NPIJar.artifactid, false);
 //            FunctionUtil.findAllSig(NPIJar.getActualFilePath().replace('\\', '/'),"four;");
@@ -754,6 +750,11 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                 FunctionUtil.NPIJarsFunctions.put(NPIJar.getDisplayFileName(), classfunctionstr);
             } else System.out.println("classfunctionstr为空的孤立Jar包: " + NPIJar.getDisplayFileName());
         }
+
+
+        FunctionUtil.CFGBuild();
+//        //获取NPIjar的所有函数名int i =0;
+
         FunctionUtil.findNPIIntro();
 
 

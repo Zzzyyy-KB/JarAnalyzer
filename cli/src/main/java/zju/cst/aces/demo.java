@@ -22,7 +22,7 @@ public class demo {
         System.out.println("输入jar包所在目录");
         final demo demo = new demo();
 //:\:\java\JavaCallGraph\target\JavaCallgraph-1.0-SNAPSHOT-jar-with-dependencies.jar
-        try{  String[] scanfiles = new String[]{"D:\\1postgraduate\\see包\\OMC\\bizframe-cloud-server-2.0.85.2\\bizframe\\bizframe\\bizframe-cloud-server-2.0.85.2.jar"};
+        try{  String[] scanfiles = new String[]{"D:\\java\\code-similarity-0.0.2.jar"};
             String[] oF=new String[]{"html"};
             String[] excl = new String[]{""};
 
