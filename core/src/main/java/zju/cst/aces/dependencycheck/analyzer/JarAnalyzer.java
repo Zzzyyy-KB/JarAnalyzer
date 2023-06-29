@@ -22,13 +22,10 @@ import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import com.github.packageurl.PackageURLBuilder;
 import com.google.common.base.Strings;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
-import org.apache.maven.shared.invoker.*;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.h2.util.IOUtils;
 import org.json.JSONArray;
@@ -38,7 +35,6 @@ import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zju.cst.aces.dependencycheck.Engine;
-import zju.cst.aces.dependencycheck.analyzer.AbstractFileTypeAnalyzer;
 import zju.cst.aces.dependencycheck.analyzer.exception.AnalysisException;
 import zju.cst.aces.dependencycheck.dependency.Confidence;
 import zju.cst.aces.dependencycheck.dependency.Dependency;
@@ -47,10 +43,7 @@ import zju.cst.aces.dependencycheck.dependency.naming.GenericIdentifier;
 import zju.cst.aces.dependencycheck.dependency.naming.Identifier;
 import zju.cst.aces.dependencycheck.dependency.naming.PurlIdentifier;
 import zju.cst.aces.dependencycheck.exception.InitializationException;
-import zju.cst.aces.dependencycheck.utils.FileFilterBuilder;
-import zju.cst.aces.dependencycheck.utils.FileUtils;
-import zju.cst.aces.dependencycheck.utils.FunctionUtil;
-import zju.cst.aces.dependencycheck.utils.Settings;
+import zju.cst.aces.dependencycheck.utils.*;
 import zju.cst.aces.dependencycheck.xml.pom.Developer;
 import zju.cst.aces.dependencycheck.xml.pom.License;
 import zju.cst.aces.dependencycheck.xml.pom.Model;
@@ -233,11 +226,15 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
     private String directname = "";
 
     //构建dependency tree所需变量
-    int degree[] = new int[1000];
+    static int[] degree = new int[1000];
 
 
     //数组长度需要改变
-    static int[][] adj = new int[500][500];
+    public static int[][] adj = new int[500][500];
+
+    //找到引入边的无pom包
+
+    public static HashMap<Dependency, Integer> findIntroNoPomJars = new HashMap<>();
 
     HashMap<String, ArrayList<String>> isistEdges = new HashMap<>();
     public static HashMap<String, String> GroupBehalfNode = new HashMap<>();
@@ -586,117 +583,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                                         versiontemp = model.getParent().getVersion();
 
                                 }
-                                String d_name = groupIdtemp + ":" + artifactIdtemp;
-
-//                                System.out.println(d_name+":"+versiontemp);
-
-                                //
-                                if (artifactIdtemp.contains("${")) {
-                                    continue;
-                                }
-
-
-                                //标记pom引入边
-                                int k = 0;
-
-
-                                /*
-                                 *log4j
-                                 * */
-                                for (Dependency dep : dcDependencies
-                                ) {
-//                                    if(artifactIdtemp.equals("log4j")&&artifactIdtemp.contains("log4j")){
-//                                        if(dep.getName()!=null&&dep.getName().contains("log4j")){
-//                                            adj[index][k]=1;
-//                                            degree[k]++;
-//                                        }
-//                                    }
-
-                                    if (dep.getName() != null && dep.getName().equals(d_name)) {
-                                        adj[index][k] = 1;
-                                        degree[k]++;
-
-                                    }
-
-
-                                    /*
-                                     *
-                                     *有pom文件的也需要用名字匹配artifactid判断
-                                     *collection4  不考虑版本号了
-                                     * 如果前面有也是作为开头，如果没有前面，则artifactIdtemp应作为头
-                                     * but: spring-boot-starter-json-2.2.2.RELEASE.jar
-                                     *
-                                     * */
-
-                                    else if (dep.getFileName() != null && dep.getFileName().matches("(\\S.)*" + artifactIdtemp + "-?\\d.*")) {
-
-//                                            System.out.println(dependency.getDisplayFileName()+"-----》"+dep.getDisplayFileName());
-                                        dep.Groupname = groupIdtemp;
-                                        dep.artifactid = artifactIdtemp;
-                                        adj[index][k] = 1;
-                                        degree[k]++;
-
-                                    }
-
-                                    /*
-                                     * spring-boot-starter-XXX
-                                     *
-                                     * */
-//                                    detectDepRelateSpringbootStarter();
-
-//                                    else if(d_name.equals("spring-boot-actuator")&&
-//                                            (dep.getFileName().matches("spring-boot"+"-*\\d.*")
-//                                                    ||dep.getDisplayFileName().matches("spring-jcl"+"-*\\d.*")
-//
-//                                    )){
-//                                        adj[index][k]=1;
-//                                        degree[k]++;
-//
-//                                    }
-//                                    else if(d_name.equals("spring-boot-actuator-autoconfigure")&&
-//                                            (dep.getFileName().matches("spring-boot"+"-*\\d.*")
-//                                                    ||dep.getDisplayFileName().matches("spring-jcl"+"-*\\d.*")
-//
-//                                            )){
-//                                        adj[index][k]=1;
-//                                        degree[k]++;
-//
-//                                    }
-//                                    else if(d_name.equals("spring-boot-autoconfigure")&&
-//                                            (dep.getFileName().matches("spring-boot"+"-*\\d.*")
-//                                                    ||dep.getDisplayFileName().matches("spring-jcl"+"-*\\d.*")
-//
-//                                            )){
-//                                        adj[index][k]=1;
-//                                        degree[k]++;
-//
-//                                    }
-//                                    else if(d_name.equals("spring-boot-starter")&&
-//                                            (dep.getFileName().matches("spring-boot"+"-*\\d.*")
-//                                                    ||dep.getDisplayFileName().matches("spring-jcl"+"-*\\d.*")
-//                                                    ||dep.getDisplayFileName().matches("jakarta.annotation-api"+"-*\\d.*")
-//
-//                                            )){
-//                                        adj[index][k]=1;
-//                                        degree[k]++;
-//
-//                                    }
-//                                    else if(d_name.equals("spring-boot-starter-actuator")&&
-//                                            (dep.getFileName().matches("spring-boot"+"-*\\d.*")
-//                                                    ||dep.getDisplayFileName().matches("spring-jcl"+"-*\\d.*")
-//                                                    ||dep.getDisplayFileName().matches("jakarta.annotation-api"+"-*\\d.*")
-//                                                    ||dep.getDisplayFileName().matches("spring-boot-actuator")
-//                                                    ||dep.getDisplayFileName().matches("spring-boot-actuator-starter")
-//
-//                                            )){
-//                                        adj[index][k]=1;
-//                                        degree[k]++;
-//
-//                                    }
-
-//                                    else if(artifactIdtemp.equals())
-                                    k++;
-                                }
+                                detectIntro(dcDependencies, index, groupIdtemp, artifactIdtemp, true);
 
 
                             }
@@ -730,6 +617,83 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
     }
 
 
+    public void detectIntro(List<Dependency> dcDependencies, int index, String groupIdtemp, String artifactIdtemp, boolean flag) {
+        String d_name = groupIdtemp + ":" + artifactIdtemp;
+        if (artifactIdtemp.contains("${"))
+            return;
+        //标记pom引入边
+        int k = 0;
+        for (Dependency dep : dcDependencies
+        ) {
+
+            if (dep.getName() != null && dep.getName().equals(d_name)) {
+                adj[index][k] = 1;
+                degree[k]++;
+            }
+
+
+            /*
+             *
+             *有pom文件的也需要用名字匹配artifactid判断
+             *collection4  不考虑版本号了
+             * 如果前面有也是作为开头，如果没有前面，则artifactIdtemp应作为头
+             * but: spring-boot-starter-json-2.2.2.RELEASE.jar
+             * */
+
+            else if (dep.getFileName() != null && dep.getFileName().matches("(\\S.)*" + artifactIdtemp + "-?\\d.*")) {
+
+//                                            System.out.println(dependency.getDisplayFileName()+"-----》"+dep.getDisplayFileName());
+
+                if (dep.level == "four") {
+                    dep.Groupname = groupIdtemp;
+                    dep.artifactid = artifactIdtemp;
+                    findIntroNoPomJars.put(dep, k);
+                    searchPomAndDetectIntro(dep, dcDependencies);
+                }
+                adj[index][k] = 1;
+                degree[k]++;
+
+            } else if (dep.getFileName() != null && dep.getFileName().contains("-j-")) {
+                if (dep.getFileName().replace("-j-", "-java").matches("(\\S.)*" + artifactIdtemp + "-?\\d.*")) {
+                    if (dep.level == "four") {
+                        dep.Groupname = groupIdtemp;
+                        dep.artifactid = artifactIdtemp;
+                        findIntroNoPomJars.put(dep, k);
+                        searchPomAndDetectIntro(dep, dcDependencies);
+                    }
+                    adj[index][k] = 1;
+                    degree[k]++;
+                }
+            }
+
+            k++;
+        }
+    }
+
+    public void searchPomAndDetectIntro(Dependency dependency, List<Dependency> dcDependencies) {
+        try {
+            dependency.level = "four-third";
+
+            String level = dependency.getFileName().substring(dependency.getFileName().lastIndexOf("-") + 1, dependency.getDisplayFileName().lastIndexOf(".jar"));
+            int index = findIntroNoPomJars.get(dependency);
+            String pomName = dependency.getFileName().replace("jar", "pom");
+            Crawler crawler = new Crawler("https://repo1.maven.org/maven2/" + dependency.Groupname.replace(".", "/") + "/" + dependency.artifactid + "/" + level + "/" + pomName);
+            ArrayList<String> dependecies = crawler.Crawl();
+            if (dependecies == null) {
+                System.out.println("还是没有的：" + dependency.getFileName());
+                return;
+            }
+            for (String d_name : dependecies) {
+                String[] Array = d_name.split(":");
+                detectIntro(dcDependencies, index, Array[0], Array[1], false);
+            }
+        } catch (Exception e) {
+
+        }
+
+    }
+
+
     public void detectNPIJar(List<Dependency> dcDependencies) {
 
         for (int i = 0; i < dcDependencies.size(); i++) {
@@ -737,12 +701,8 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 
             //排除一方、二方库以及war包后的 非pom引入jar包
             if (dcDependencies.get(i).level != "own" && dcDependencies.get(i).level != "direct") {
-
                 if (degree[i] == 0) {
                     Dependency dependency = dcDependencies.get(i);
-//                    if(dependency.level =="direct"){
-//                        System.out.println(dependency.getDisplayFileName());
-//                    }
                     if (!dependency.getDisplayFileName().contains("shaded")) {
                         NPIJars.put(NPIJars.size(), dependency);
                         System.out.println("NPI JAR:" + dependency.getDisplayFileName());
@@ -751,53 +711,148 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
             }
         }
 
-        if (NPIJars.size() == 0) {
-            System.out.println("没有发现孤立jar包");
-        } else {
-            //获取NPIjar的所有函数名int i =0;
-            for (Dependency NPIJar : NPIJars.values()) {
-                String classfunctionstr = FunctionUtil.functionDetect(NPIJar.getActualFilePath().replace('\\', '/'), NPIJar.artifactid, false);
-                if (classfunctionstr != "") {
-                    FunctionUtil.NPIJarsFunctions.put(NPIJar.getDisplayFileName(), classfunctionstr);
-                } else System.out.println("classfunctionstr为空的孤立Jar包: " + NPIJar.getDisplayFileName());
-            }
-//
-//
-//
-//
-//
-//
-//        //对一方、二方库jar看是否有调用的关系
-            for (Dependency owndependency : OwnGroupDependencies.values()) {
-                String classfunctionstr = FunctionUtil.functionDetect(owndependency.getActualFilePath().replace('\\', '/'), owndependency.artifactid, true);
-                if (classfunctionstr != "")
-                    FunctionUtil.OWNJarsFunctions.put(owndependency.getDisplayFileName(), classfunctionstr);
-            }
-            for (Dependency directdependency : DirectGroupDependencies.values()) {
-                String classfunctionstr = FunctionUtil.functionDetect(directdependency.getActualFilePath().replace('\\', '/'), directdependency.artifactid, true);
-                if (classfunctionstr != "")
-                    FunctionUtil.DIRECTJarsFunctions.put(directdependency.getDisplayFileName(), classfunctionstr);
-            }
+//        //找到一方、二方库jar的所有public函数
+        for (Dependency owndependency : OwnGroupDependencies.values()) {
+            String classfunctionstr = FunctionUtil.functionDetect(owndependency.getActualFilePath().replace('\\', '/'), owndependency.artifactid, true);
+            FunctionUtil.findAllSig(owndependency.getActualFilePath().replace('\\', '/'),"own");
 
-
-            for (Dependency thirddependency : ThirdGroupDependencies.values()) {
-                int f =0;
-                for (Dependency npijar: NPIJars.values()
-                ) {
-                    if(thirddependency==npijar){
-                        f=1;
-                        break;
-                    }
-
-
-                }
-                if(f==1) continue;
-                String classfunctionstr = FunctionUtil.functionDetect(thirddependency.getActualFilePath().replace('\\', '/'), thirddependency.artifactid, true);
-                if (classfunctionstr != "")
-                    FunctionUtil.THIRDJarsFunctions.put(thirddependency.getDisplayFileName(), classfunctionstr);
-            }
-            FunctionUtil.CFGBuild();
+            if (classfunctionstr != "")
+                FunctionUtil.OWNJarsFunctions.put(owndependency.getDisplayFileName(), classfunctionstr);
         }
+        for (Dependency directdependency : DirectGroupDependencies.values()) {
+            String classfunctionstr = FunctionUtil.functionDetect(directdependency.getActualFilePath().replace('\\', '/'), directdependency.artifactid, true);
+            FunctionUtil.findAllSig(directdependency.getActualFilePath().replace('\\', '/'),"direct");
+            if (classfunctionstr != "")
+                FunctionUtil.DIRECTJarsFunctions.put(directdependency.getDisplayFileName(), classfunctionstr);
+        }
+
+        for (Dependency thirddependency : ThirdGroupDependencies.values()) {
+            int flag = 0;
+            for (Dependency npijar : NPIJars.values()
+            ) {
+                if (thirddependency == npijar) {
+                    flag = 1;
+                    break;
+                }
+            }
+            if (flag == 1) continue;
+            FunctionUtil.findAllSig(thirddependency.getActualFilePath().replace('\\', '/'),"third");
+
+            String classfunctionstr = FunctionUtil.functionDetect(thirddependency.getActualFilePath().replace('\\', '/'), thirddependency.artifactid, true);
+            if (classfunctionstr != "")
+                FunctionUtil.THIRDJarsFunctions.put(thirddependency.getDisplayFileName(), classfunctionstr);
+        }
+
+        for (Dependency NPIJar : NPIJars.values()) {
+            String classfunctionstr = FunctionUtil.functionDetect(NPIJar.getActualFilePath().replace('\\', '/'), NPIJar.artifactid, false);
+//            FunctionUtil.findAllSig(NPIJar.getActualFilePath().replace('\\', '/'),"four;");
+            if (classfunctionstr != "") {
+                FunctionUtil.NPIJarsFunctions.put(NPIJar.getDisplayFileName(), classfunctionstr);
+            } else System.out.println("classfunctionstr为空的孤立Jar包: " + NPIJar.getDisplayFileName());
+        }
+
+
+        FunctionUtil.CFGBuild();
+//        //获取NPIjar的所有函数名int i =0;
+
+        FunctionUtil.findNPIIntro();
+
+
+
+    }
+
+    public File creatSJsonFile(String path) {
+        try {
+            File file = new File(path);
+
+
+            if (!file.getParentFile().exists()) { // 如果父目录不存在，创建父目录
+                file.getParentFile().mkdirs();
+            }
+            if (file.exists()) { // 如果已存在,删除旧文件
+                file.delete();
+            }
+            file.createNewFile();
+            return file;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+
+    }
+
+    public void writeJsonFile(File file, JSONObject root) {
+        try {
+            String jsonString1 = formatJson(root.toString());
+            // 将格式化后的字符串写入文件
+            Writer write1 = new OutputStreamWriter(new FileOutputStream(file), "UTF-8");
+            write1.write(jsonString1);
+            write1.flush();
+            write1.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void buildDependencyTree(List<Dependency> dependencies) {
+
+
+//
+        JarAnalyzer jarAnalyzer = new JarAnalyzer();
+//
+        JSONObject root1 = new JSONObject();
+
+        JSONObject root4 = new JSONObject();
+
+        JSONArray nodes = new JSONArray();
+
+
+        String nodePath = "./node.json";
+        String nodEedgePath = "./nodeedge.json";
+
+
+        try {
+            File file1 = creatSJsonFile(nodePath);
+            File file4 = creatSJsonFile(nodEedgePath);
+//
+//
+//
+//
+//
+            for (Dependency dependency : dependencies
+            ) {
+
+                JSONObject node = new JSONObject();
+
+                node.put("id", dependency.getDisplayFileName());
+                node.put("level", dependency.level);
+                node.put("label", dependency.getDisplayFileName());
+                nodes.put(node);
+
+
+            }
+
+            JSONArray nodeEdges = new JSONArray();
+
+            for (int i = 0; i < dependencies.size(); i++) {
+                jarAnalyzer.addEdges(i, nodeEdges, dependencies);
+            }
+            root4.put("nodeEdges", nodeEdges);
+            writeJsonFile(file4, root4);
+
+            root1.put("nodes", nodes);
+            writeJsonFile(file1, root1);
+
+
+            //加边
+//            jarAnalyzer.topoSort(edges,nodeEdges,dependencies);
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
 
     }
 
@@ -835,6 +890,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 
             //没有pom文件的
             if (pomEntries.size() == 0) {
+
 //                GroupBehalfNode.put(dependency.getName(),dependency.getName());
 
                 //没有pom文件的默认放在第四层
@@ -842,6 +898,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                 dependency.artifactid = dependency.getFileName();
                 dependency.level = "four";
                 GroupBehalfNode.put(dependency.Groupname, dependency.getFileName());
+                ThirdGroupDependencies.put(ThirdGroupDependencies.size(), dependency);
             }
 
             for (String path : pomEntries) {
@@ -914,13 +971,63 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
     }
 
 
+    int[][] copyadj = adj;
+    public Set<Integer> path = new HashSet<>();
+
+    public void DFS(int index, JSONArray requestedby, List<Dependency> dependencies) {
+        for (int i = 0; i < dependencies.size(); i++) {
+            if (copyadj[i][index] == 1) {
+                copyadj[i][index] = 0;
+                if (!path.contains(i)) {
+                    if (dependencies.get(i).level == "own" || dependencies.get(i).level == "direct")
+                        requestedby.put(dependencies.get(i).Groupname + ":" + dependencies.get(i).getFileName());
+                    path.add(i);
+                }
+                if (path.size() < 10)
+                    DFS(i, requestedby, dependencies);
+            }
+        }
+    }
+
+    public void addEdges(int firstindex, JSONArray nodeEdges, List<Dependency> dependencies) throws JSONException {
+        copyadj = adj;
+        path = new HashSet<>();
+        ArrayList<Integer> store = new ArrayList<>();
+        JSONArray requestedby = new JSONArray();
+
+        for (int i = 0; i < dependencies.size(); i++) {
+            if (copyadj[i][firstindex] == 1) {
+                Dependency nextdependency = dependencies.get(i);
+                JSONObject nodeEdge = new JSONObject();
+
+                nodeEdge.put("Jar Name", dependencies.get(firstindex).getDisplayFileName());
+
+                JSONObject direct = new JSONObject();
+                direct.put("Directly requested by:", nextdependency.Groupname + ":" + nextdependency.getDisplayFileName());
+
+                requestedby.put(direct);
+                copyadj[i][firstindex] = 0;
+                path.add(firstindex);
+                path.add(i);
+                store.add(i);
+                nodeEdge.put("Requested by", requestedby);
+                nodeEdges.put(nodeEdge);
+            }
+        }
+        for (int i = 0; i < store.size(); i++) {
+            DFS(store.get(i), requestedby, dependencies);
+        }
+
+    }
+
     public void topoSort(JSONArray nodeEdges, List<Dependency> dependencies) {
 
         try {
-            int[] degree1 = degree;
+
+
             Queue<Integer> queue = new LinkedList<>();
             for (int i = 0; i < dependencies.size(); i++) {
-                if (degree1[i] == 0) {
+                if (degree[i] == 0) {
                     queue.add(i);
                 }
             }
@@ -950,6 +1057,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                                 if (isistEdges.get(behalf1) == null) {
                                     tempedge.add(behalf2);
 
+
                                     isistEdges.put(behalf1, tempedge);
                                 } else {
                                     isistEdges.get(behalf1).add(behalf2);
@@ -959,16 +1067,19 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                         }
                         JSONObject nodeEdge = new JSONObject();
 
-                        nodeEdge.put("source node", firstdependency.getDisplayFileName());
+                        nodeEdge.put("sourcenode", firstdependency.getDisplayFileName());
+                        nodeEdge.put("source", firstdependency.Groupname);
 
 
-                        nodeEdge.put("target node", nextdependency.getDisplayFileName());
+                        nodeEdge.put("targetnode", nextdependency.getDisplayFileName());
+                        nodeEdge.put("target", nextdependency.Groupname);
+                        nodeEdge.put("mark", 0);
 
                         nodeEdges.put(nodeEdge);
 
                     }
-                    degree1[i]--;
-                    if (degree1[i] == 0) {
+                    degree[i]--;
+                    if (degree[i] == 0) {
                         queue.add(i);
                     }
                 }

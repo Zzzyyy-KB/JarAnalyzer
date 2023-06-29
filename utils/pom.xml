@@ -50,6 +50,10 @@ Copyright (c) 2014 - Jeremy Long. All Rights Reserved.
             <artifactId>commons-lang3</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
@@ -107,6 +111,16 @@ Copyright (c) 2014 - Jeremy Long. All Rights Reserved.
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
             <version>11</version>
+        </dependency>
+<!--   爬虫所需依赖     -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.14</version>
         </dependency>
 
     </dependencies>

@@ -3,13 +3,11 @@ package zju.cst.aces.dependencycheck.utils;
 
 import edu.zju.cst.aces.sootex.ASMParser;
 import edu.zju.cst.aces.sootex.CGType;
-import edu.zju.cst.aces.sootex.RunConfig;
 import edu.zju.cst.aces.sootex.SootExecutorUtil;
 import edu.zju.cst.aces.sootex.callgraph.SimpleCallGraphFilter;
 import javafx.util.Pair;
 import org.apache.commons.io.FileUtils;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import org.objectweb.asm.*;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.slf4j.Logger;
@@ -30,6 +28,8 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.Map;
+
 
 public class FunctionUtil {
 
@@ -44,7 +44,6 @@ public class FunctionUtil {
 //    private  static String MethodInclustr = "";
 
     private static String Classmethodstr = "";
-//    public static String className = "";
 
     //记录所有检测jar包的路径
     public static String ClassPaths = "";
@@ -59,6 +58,17 @@ public class FunctionUtil {
     public static HashMap<String, String> THIRDJarsFunctions = new HashMap<>();
 
 
+    //记录每个level中一个class(key)的Determiner(value)
+    public static HashMap<String, String> NPIJarsClassesDeterminer = new HashMap<>();
+
+
+    public static HashMap<String, String> OWNJarsClassesDeterminer = new HashMap<>();
+
+    public static HashMap<String, String> DIRECTJarsClassesDeterminer = new HashMap<>();
+
+    public static HashMap<String, String> THIRDJarsClassesDeterminer = new HashMap<>();
+
+
     public static final Logger LOGGER = LoggerFactory.getLogger(FunctionUtil.class);
 
 
@@ -70,6 +80,9 @@ public class FunctionUtil {
     public static final Logger EDGE_LOGGER = LoggerFactory.getLogger("Edge");
 
     private static File tmpFolder;
+
+    private static CallGraph callGraph;
+
 
     //    public static final Logger RES_LOGGER = LoggerFactory.getLogger("RES");
     public static String functionDetect(String jarFile, String artifactid, boolean flag) {
@@ -85,7 +98,6 @@ public class FunctionUtil {
 
 
             candidateClasses.addAll(ASMParser.loadClasses(new JarFile(jarFile)));
-
             String artifactidPart[] = artifactid.split("[-.]");
 
             //孤立jar包只找本项目编写的class
@@ -137,19 +149,19 @@ public class FunctionUtil {
 
 
                 for (MethodNode method : clazz.methods) {
-                    // skip non-public methods and abstract method
                     if (method.access != Opcodes.ACC_PUBLIC)
                         continue;
                     Classmethodstr = Classmethodstr.concat(clazz.name + "_" + method.name).replace("/", ".") + ";";
-                    //own direct jar
+
                     if (flag)
                         entrances.add(getMethodSignature(clazz.name, method.name, method.desc));
+
 
                 }
 
             }
         } catch (IOException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
         }
 
 
@@ -157,12 +169,104 @@ public class FunctionUtil {
 
     }
 
-    static ArrayList<String> pathJars = new ArrayList<>();
-    static ArrayList<String> pathMethods = new ArrayList<>();
+    public static void findAllSig(String jarpath, String level) {
+        try {
 
-    public static boolean findSourceMethod(SootMethod method, CallGraph newCg, String npi_class_method, String npijar, boolean flag) {
+            JarFile jarFile = new JarFile(jarpath);
+            Enumeration<JarEntry> entries = jarFile.entries();
+            while (entries.hasMoreElements()) {
+                // 获取当前条目
+                JarEntry jarEntry = entries.nextElement();
+                // 判断是否是一个class文件
+                if (jarEntry.getName().endsWith(".class")) {
+                    // 获取输入流
+                    InputStream inputStream = jarFile.getInputStream(jarEntry);
 
-        for (Iterator<Edge> it = newCg.edgesInto(method); it.hasNext(); ) {
+                    ClassReader classReader = new ClassReader(inputStream);
+//        ClassReader classReader = new ClassReader("com/hundsun/jres/bizframe/cache/service/impl/BizLanguageCacheServiceImpl");
+
+                    // 创建一个ClassVisitor对象，重写visit方法
+                    ClassVisitor classVisitor = new ClassVisitor(Opcodes.ASM8) {
+                        String classname = "";
+
+                        @Override
+                        public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+                            // 打印类的全限定名
+                            //调用父类的visit方法
+                            classname = name.replace('/', '.');
+
+                            super.visit(version, access, name, signature, superName, interfaces);
+                        }
+
+                        @Override
+                        public MethodVisitor visitMethod(
+                                final int access,
+                                final String name,
+                                final String descriptor,
+                                final String signature,
+                                final String[] exceptions) {
+
+                            // 保存类的全限定名
+                            switch (level) {
+                                case "own":
+                                    OWNJarsClassesDeterminer.put(classname, signature);
+                                case "direct":
+                                    DIRECTJarsClassesDeterminer.put(classname, signature);
+                                case "third":
+                                    THIRDJarsClassesDeterminer.put(classname, signature);
+                                case "four":
+                                    NPIJarsClassesDeterminer.put(classname, signature);
+                            }
+
+//                            System.out.println("The fully qualified method name is: " + name);
+//                            System.out.println("The fully qualified method descriptor is: " + descriptor);
+
+
+                            // 调用父类的visit方法
+                            MethodVisitor methodVisitor = super.visitMethod(access, name, descriptor, signature, exceptions);
+                            return methodVisitor;
+                        }
+
+                        @Override
+                        public FieldVisitor visitField(
+                                final int access,
+                                final String name,
+                                final String descriptor,
+                                final String signature,
+                                final Object value) {
+//                            System.out.println("The fully qualified field name is: " + name);
+//                            System.out.println("The fully qualified field descriptor is: " + descriptor);
+                            // 保存类的全限定名
+                            switch (level) {
+                                case "own":
+                                    OWNJarsClassesDeterminer.put(classname, signature);
+                                case "direct":
+                                    DIRECTJarsClassesDeterminer.put(classname, signature);
+                                case "third":
+                                    THIRDJarsClassesDeterminer.put(classname, signature);
+                                case "four":
+                                    NPIJarsClassesDeterminer.put(classname, signature);
+                            }
+
+                            // 调用父类的visit方法
+                            FieldVisitor fieldVisitor = super.visitField(access, name, descriptor, signature, value);
+                            return fieldVisitor;
+
+                        }
+                    };
+                    // 调用ClassReader的accept方法，传入ClassVisitor对象和读取模式
+                    classReader.accept(classVisitor, 0);
+                }
+            }
+        } catch (Exception e) {
+
+        }
+    }
+
+
+    public static boolean findSourceMethod(SootMethod method, String npi_class_method, String npijar, boolean flag) {
+
+        for (Iterator<Edge> it = callGraph.edgesInto(method); it.hasNext(); ) {
             //上一个src method 找到了
             if (flag) return flag;
             Edge edge = it.next();
@@ -173,11 +277,15 @@ public class FunctionUtil {
                 for (String own_class_method : own_class_methods) {
 
                     if (own_class_method.equals(edge.src().getDeclaringClass().getName() + "_" + edge.src().getName())) {
+                        String clazz = own_class_method.split("_")[0];
+                        String cla = npi_class_method.split("_")[0];
+                        if (OWNJarsClassesDeterminer.get(clazz).contains(cla)) {
+                            System.out.println("一方库Jar包: " + ownjar + " -> 孤立Jar包: " + npijar);
+                            System.out.println("一方库Method: " + own_class_method + " -> Method: " + npi_class_method);
 
-                        System.out.println("一方库Jar包: " + ownjar + " -> 孤立Jar包: " + npijar);
-                        System.out.println("一方库Method: " + own_class_method + " -> Method: " + npi_class_method);
-                        flag = true;
-                        return flag;
+                            flag = true;
+                            return flag;
+                        }
 
                     }
                 }
@@ -189,13 +297,15 @@ public class FunctionUtil {
                 String[] direct_class_methods = direct_class_methodstr.split(";");
                 for (String direct_class_method : direct_class_methods) {
                     if (direct_class_method.equals(edge.src().getDeclaringClass().getName() + "_" + edge.src().getName())) {
+                        String clazz = direct_class_method.split("_")[0];
+                        String cla = npi_class_method.split("_")[0];
+                        if (DIRECTJarsClassesDeterminer.get(clazz).contains(cla)) {
 
-
-                        System.out.println("二方库Jar包: " + directjar + " -> 孤立Jar包: " + npijar);
-                        System.out.println("二方库Method: " + direct_class_method + " -> Method: " + npi_class_method);
-                        flag = true;
-                        return flag;
-
+                            System.out.println("二方库Jar包: " + directjar + " -> 孤立Jar包: " + npijar);
+                            System.out.println("二方库Method: " + direct_class_method + " -> Method: " + npi_class_method);
+                            flag = true;
+                            return flag;
+                        }
                     }
                 }
             }
@@ -205,18 +315,18 @@ public class FunctionUtil {
                 String[] third_class_methods = third_class_methodstr.split(";");
                 for (String third_class_method : third_class_methods) {
                     if (third_class_method.equals(edge.src().getDeclaringClass().getName() + "_" + edge.src().getName())) {
+                        String clazz = third_class_method.split("_")[0];
+                        String cla = npi_class_method.split("_")[0];
+                        if (THIRDJarsClassesDeterminer.get(clazz).contains(cla)) {
 
-
-                        System.out.println("三方库Jar包: " + thirdjar + " -> 孤立Jar包: " + npijar);
-                        System.out.println("三方库Method: " + third_class_method + " -> Method: " + npi_class_method);
-                        flag =true;
-                        return flag;
+                            System.out.println("三方库Jar包: " + thirdjar + " -> 孤立Jar包: " + npijar);
+                            System.out.println("三方库Method: " + third_class_method + " -> Method: " + npi_class_method);
+                            flag = true;
+                            return flag;
+                        }
                     }
                 }
             }
-
-
-
 
 
         }
@@ -224,7 +334,6 @@ public class FunctionUtil {
 
 
     }
-
 
     public static String getMethodSignature(String className, String methodName, String methodDescriptor) {
         String returnType = Type.getReturnType(methodDescriptor).getClassName();
@@ -243,7 +352,14 @@ public class FunctionUtil {
 
         SootExecutorUtil.setSootEntryPoints(entrances);
 
-        SootExecutorUtil.doCHAAanalysis();
+        try {
+            SootExecutorUtil.doFastSparkPointsToAnalysis(new HashMap<>(), CGType.VTA, null);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+//        SootExecutorUtil.doCHAAanalysis();
+
+//        System.out.println(j);
         CallGraph cg = Scene.v().getCallGraph();
 
 
@@ -252,61 +368,22 @@ public class FunctionUtil {
         SimpleCallGraphFilter refiner = new SimpleCallGraphFilter();
         CallGraph newCg = refiner.refine(cg);
         Scene.v().setCallGraph(newCg);
+        callGraph = newCg;
         Scene.v().setReachableMethods(null);   //update reachable methods
 
         LOGGER.info("Start to dump call graph");
+
+    }
+
+    public static void findNPIIntro() {
         Set<String> findNPIJARs = new HashSet<>();
+
         for (Iterator<MethodOrMethodContext> iterator = Scene.v().getReachableMethods().listener(); iterator.hasNext(); ) {
             SootMethod method = (SootMethod) iterator.next();
-
-
-//            for (Iterator<Edge> it = newCg.edgesOutOf(method); it.hasNext(); ) {
-//                Edge edge = it.next();
-//                //如果该method的下层引用是jdk的同名method
-//                if (edge.tgt().getName() == method.getName() && edge.tgt().getDeclaringClass().getName() != method.getDeclaringClass().getName()) {
-//                    flag = true;
-//                    break;
-//                }
-//            }
-//            if (flag)
-//                continue;
-//            ;
+            boolean flag = false;
 
             //过滤简单函数
-//            if (method.getName().equals("read")
-//                    || method.getName().equals("equals")
-//                    || method.getName().equals("hash")
-//                    || method.getName().equals("write")
-//                    || method.getName().equals("call")
-//                    || method.getName().equals("get")
-//                    || method.getName().equals("add")
-//                    || method.getName().equals("put")
-//                    || method.getName().equals("next")
-//                    || method.getName().equals("hasNext")
-//                    || method.getName().equals("firstKey")
-//                    || method.getName().equals("size")
-//                    || method.getName().equals("hasnext")
-//                    || method.getName().equals("toString")
-//                    || method.getName().equals("bind")
-//                    || method.getName().equals("remove")
-//                    || method.getName().equals("toArray")
-//                    || method.getName().equals("indexOf")
-//                    || method.getName().equals("iterator")
-//                    || method.getName().equals("getValue")
-//                    || method.getName().equals("getKey")
-//                    || method.getName().equals("getKey")
-//                    || method.getName().equals("getKey")
-//                    || method.getName().equals("getKey")
-//                    || method.getName().equals("getKey")
-//
-//
-//            )
-//                continue;
 
-
-//            System.out.println(method.getBytecodeSignature());
-//            System.out.println("Methodtag:"+method.getDeclaringClass().getName()+"_"+method.getName());
-//            LOGGER.info("{}_{}", method.getDeclaringClass().getName(), method.getName());
 
             boolean tag = false;
 
@@ -322,40 +399,30 @@ public class FunctionUtil {
                         if (!findNPIJARs.contains(npijar)) {
                             findNPIJARs.add(npijar);
                             System.out.println("第" + findNPIJARs.size() + "个孤立jar包: " + npijar);
-                            System.out.println("找到的函数" + method.getDeclaringClass().getName() + "_" + method.getName());
-
+                            System.out.println("孤立函数" + npi_class_method);
                         }
 
-                        tag = findSourceMethod(method, newCg, npi_class_method, npijar, tag);
-                        if (tag) {
 
-                            for (Iterator<Edge> itetrator = newCg.edgesOutOf(method); itetrator.hasNext(); ) {
-                                Edge edge = itetrator.next();
+                        tag = findSourceMethod(method, npi_class_method, npijar, tag);
 
-                                System.out.println("source method:" + edge.tgt().getDeclaringClass().getName() + "_" + edge.tgt().getName());
-                            }
-                        }
-                        break;
+
+                        if (tag)
+                            break;
 
 
                     }
                 }
-                if (tag) break;
+//                if (tag) break;
             }
 
 
         }
-//        for (Pair<String , String>:Intro_relations
-//             ) {
-//
-//        }
+
         for (String leftnpijar : NPIJarsFunctions.keySet()) {
             if (!findNPIJARs.contains(leftnpijar)) {
                 System.out.println("没找到引入的孤立jar包: " + leftnpijar);
             }
         }
-
-
     }
 
 

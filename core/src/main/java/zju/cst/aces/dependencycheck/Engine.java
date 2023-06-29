@@ -61,7 +61,7 @@ public class Engine implements FileFilter, AutoCloseable {
     /**
      * The list of dependencies.
      */
-    private  final List<Dependency> dependencies = Collections.synchronizedList(new ArrayList<>());
+    private final List<Dependency> dependencies = Collections.synchronizedList(new ArrayList<>());
     /**
      * A Map of analyzers grouped by Analysis phase.
      */
@@ -99,7 +99,7 @@ public class Engine implements FileFilter, AutoCloseable {
      */
     private final String accessExternalSchema;
 
-    private  String MARKFILE;
+    private String MARKFILE;
 
     /**
      * Creates a new {@link Mode#STANDALONE} Engine.
@@ -113,7 +113,7 @@ public class Engine implements FileFilter, AutoCloseable {
     /**
      * Creates a new Engine.
      *
-     * @param mode the mode of operation
+     * @param mode     the mode of operation
      * @param settings reference to the configured settings
      */
     public Engine(@NotNull final Mode mode, @NotNull final Settings settings) {
@@ -124,7 +124,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * Creates a new {@link Mode#STANDALONE} Engine.
      *
      * @param serviceClassLoader a reference the class loader being used
-     * @param settings reference to the configured settings
+     * @param settings           reference to the configured settings
      */
     public Engine(@NotNull final ClassLoader serviceClassLoader, @NotNull final Settings settings) {
         this(serviceClassLoader, Mode.STANDALONE, settings);
@@ -134,8 +134,8 @@ public class Engine implements FileFilter, AutoCloseable {
      * Creates a new Engine.
      *
      * @param serviceClassLoader a reference the class loader being used
-     * @param mode the mode of the engine
-     * @param settings reference to the configured settings
+     * @param mode               the mode of the engine
+     * @param settings           reference to the configured settings
      */
     public Engine(@NotNull final ClassLoader serviceClassLoader, @NotNull final Mode mode, @NotNull final Settings settings) {
         this.settings = settings;
@@ -265,9 +265,9 @@ public class Engine implements FileFilter, AutoCloseable {
      * will be scanned recursively. Any dependencies identified are added to the
      * dependency collection.
      *
-     * @param paths an array of paths to files or directories to be analyzed
+     * @param paths            an array of paths to files or directories to be analyzed
      * @param projectReference the name of the project or scope in which the
-     * dependency was identified
+     *                         dependency was identified
      * @return the list of dependencies scanned
      * @since v1.4.4
      */
@@ -299,9 +299,9 @@ public class Engine implements FileFilter, AutoCloseable {
      * scanned recursively. Any dependencies identified are added to the
      * dependency collection.
      *
-     * @param path the path to a file or directory to be analyzed
+     * @param path             the path to a file or directory to be analyzed
      * @param projectReference the name of the project or scope in which the
-     * dependency was identified
+     *                         dependency was identified
      * @return the list of dependencies scanned
      * @since v1.4.4
      */
@@ -328,9 +328,9 @@ public class Engine implements FileFilter, AutoCloseable {
      * will be scanned recursively. Any dependencies identified are added to the
      * dependency collection.
      *
-     * @param files an array of paths to files or directories to be analyzed.
+     * @param files            an array of paths to files or directories to be analyzed.
      * @param projectReference the name of the project or scope in which the
-     * dependency was identified
+     *                         dependency was identified
      * @return the list of dependencies
      * @since v1.4.4
      */
@@ -363,9 +363,9 @@ public class Engine implements FileFilter, AutoCloseable {
      * it will be scanned recursively. Any dependencies identified are added to
      * the dependency collection.
      *
-     * @param files a set of paths to files or directories to be analyzed
+     * @param files            a set of paths to files or directories to be analyzed
      * @param projectReference the name of the project or scope in which the
-     * dependency was identified
+     *                         dependency was identified
      * @return the list of dependencies scanned
      * @since v1.4.4
      */
@@ -395,9 +395,9 @@ public class Engine implements FileFilter, AutoCloseable {
      * scanned recursively. Any dependencies identified are added to the
      * dependency collection.
      *
-     * @param file the path to a file or directory to be analyzed
+     * @param file             the path to a file or directory to be analyzed
      * @param projectReference the name of the project or scope in which the
-     * dependency was identified
+     *                         dependency was identified
      * @return the list of dependencies scanned
      * @since v1.4.4
      */
@@ -433,9 +433,9 @@ public class Engine implements FileFilter, AutoCloseable {
      * Recursively scans files and directories. Any dependencies identified are
      * added to the dependency collection.
      *
-     * @param dir the directory to scan
+     * @param dir              the directory to scan
      * @param projectReference the name of the project or scope in which the
-     * dependency was identified
+     *                         dependency was identified
      * @return the list of Dependency objects scanned
      * @since v1.4.4
      */
@@ -472,13 +472,14 @@ public class Engine implements FileFilter, AutoCloseable {
     }
 
     //CSOFF: NestedIfDepth
+
     /**
      * Scans a specified file. If a dependency is identified it is added to the
      * dependency collection.
      *
-     * @param file The file to scan
+     * @param file             The file to scan
      * @param projectReference the name of the project or scope in which the
-     * dependency was identified
+     *                         dependency was identified
      * @return the scanned dependency
      * @since v1.4.4
      */
@@ -552,7 +553,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * be included in the thrown exception collection.
      *
      * @throws ExceptionCollection a collections of any exceptions that occurred
-     * during analysis
+     *                             during analysis
      */
     public void analyzeDependencies(String markfile) throws ExceptionCollection {
         final List<Throwable> exceptions = Collections.synchronizedList(new ArrayList<>());
@@ -615,8 +616,8 @@ public class Engine implements FileFilter, AutoCloseable {
      * Executes executes the analyzer using multiple threads.
      *
      * @param exceptions a collection of exceptions that occurred during
-     * analysis
-     * @param analyzer the analyzer to execute
+     *                   analysis
+     * @param analyzer   the analyzer to execute
      * @throws ExceptionCollection thrown if exceptions occurred during analysis
      */
     protected void executeAnalysisTasks(@NotNull final Analyzer analyzer, List<Throwable> exceptions) throws ExceptionCollection {
@@ -639,35 +640,31 @@ public class Engine implements FileFilter, AutoCloseable {
                 }
             }
             //建立依赖树
-            if(analyzer.getName()=="Jar Analyzer"){
-                buildDependencyTree();
+            if (analyzer.getName() == "Jar Analyzer") {
+
+                try {
+                    JarAnalyzer jarAnalyzer = new JarAnalyzer();
+
+                    int index = 0;
+                    for (Dependency dependency : dependencies
+                    ) {
+                        jarAnalyzer.analyzeIntro(dependency, dependencies, index++, MARKFILE);
+                    }
+
+                    jarAnalyzer.buildDependencyTree(dependencies);
+                    jarAnalyzer.detectNPIJar(dependencies);
 
 
-                JarAnalyzer jarAnalyzer =new JarAnalyzer();
-
-                int index = 0;
-                for (Dependency dependency : dependencies
-                ) {
-                    jarAnalyzer.analyzeIntro(dependency, dependencies, index++,MARKFILE);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-
-                jarAnalyzer.detectNPIJar(dependencies);
-
-
-
-
 
 
             }
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throwFatalExceptionCollection("Analysis has been interrupted.", e, exceptions);
-        } catch (XmlPullParserException e) {
-            throw new RuntimeException(e);
-        }                 catch (Exception e) {
-            e.printStackTrace();
-        }finally {
+        } finally {
             executorService.shutdown();
         }
     }
@@ -675,7 +672,7 @@ public class Engine implements FileFilter, AutoCloseable {
     /**
      * Returns the analysis tasks for the dependencies.
      *
-     * @param analyzer the analyzer to create tasks for
+     * @param analyzer   the analyzer to create tasks for
      * @param exceptions the collection of exceptions to collect
      * @return a collection of analysis tasks
      */
@@ -707,7 +704,7 @@ public class Engine implements FileFilter, AutoCloseable {
      *
      * @param analyzer the analyzer to prepare
      * @throws InitializationException thrown when there is a problem
-     * initializing the analyzer
+     *                                 initializing the analyzer
      */
     protected void initializeAnalyzer(@NotNull final Analyzer analyzer) throws InitializationException {
         try {
@@ -749,7 +746,6 @@ public class Engine implements FileFilter, AutoCloseable {
             LOGGER.trace("", ex);
         }
     }
-
 
 
     /**
@@ -825,11 +821,11 @@ public class Engine implements FileFilter, AutoCloseable {
     /**
      * Constructs and throws a fatal exception collection.
      *
-     * @param message the exception message
-     * @param throwable the cause
+     * @param message    the exception message
+     * @param throwable  the cause
      * @param exceptions a collection of exception to include
      * @throws ExceptionCollection a collection of exceptions that occurred
-     * during analysis
+     *                             during analysis
      */
     private void throwFatalExceptionCollection(String message, @NotNull final Throwable throwable,
                                                @NotNull final List<Throwable> exceptions) throws ExceptionCollection {
@@ -843,9 +839,9 @@ public class Engine implements FileFilter, AutoCloseable {
      * Writes the report to the given output directory.
      *
      * @param applicationName the name of the application/project
-     * @param outputDir the path to the output directory (can include the full
-     * file name if the format is not ALL)
-     * @param format the report format (ALL, HTML, CSV, JSON, etc.)
+     * @param outputDir       the path to the output directory (can include the full
+     *                        file name if the format is not ALL)
+     * @param format          the report format (ALL, HTML, CSV, JSON, etc.)
      * @throws ReportException thrown if there is an error generating the report
      * @deprecated use
      * {@link #writeReports(String, File, String, ExceptionCollection)}
@@ -856,15 +852,16 @@ public class Engine implements FileFilter, AutoCloseable {
     }
 
     //CSOFF: LineLength
+
     /**
      * Writes the report to the given output directory.
      *
      * @param applicationName the name of the application/project
-     * @param outputDir the path to the output directory (can include the full
-     * file name if the format is not ALL)
-     * @param format the report format (ALL, HTML, CSV, JSON, etc.)
-     * @param exceptions a collection of exceptions that may have occurred
-     * during the analysis
+     * @param outputDir       the path to the output directory (can include the full
+     *                        file name if the format is not ALL)
+     * @param format          the report format (ALL, HTML, CSV, JSON, etc.)
+     * @param exceptions      a collection of exceptions that may have occurred
+     *                        during the analysis
      * @throws ReportException thrown if there is an error generating the report
      */
     public void writeReports(String applicationName, File outputDir, String format, ExceptionCollection exceptions) throws ReportException {
@@ -876,12 +873,12 @@ public class Engine implements FileFilter, AutoCloseable {
      * Writes the report to the given output directory.
      *
      * @param applicationName the name of the application/project
-     * @param groupId the Maven groupId
-     * @param artifactId the Maven artifactId
-     * @param version the Maven version
-     * @param outputDir the path to the output directory (can include the full
-     * file name if the format is not ALL)
-     * @param format the report format (ALL, HTML, CSV, JSON, etc.)
+     * @param groupId         the Maven groupId
+     * @param artifactId      the Maven artifactId
+     * @param version         the Maven version
+     * @param outputDir       the path to the output directory (can include the full
+     *                        file name if the format is not ALL)
+     * @param format          the report format (ALL, HTML, CSV, JSON, etc.)
      * @throws ReportException thrown if there is an error generating the report
      * @deprecated use
      * {@link #writeReports(String, String, String, String, File, String, ExceptionCollection)}
@@ -894,18 +891,19 @@ public class Engine implements FileFilter, AutoCloseable {
     }
 
     //CSOFF: LineLength
+
     /**
      * Writes the report to the given output directory.
      *
      * @param applicationName the name of the application/project
-     * @param groupId the Maven groupId
-     * @param artifactId the Maven artifactId
-     * @param version the Maven version
-     * @param outputDir the path to the output directory (can include the full
-     * file name if the format is not ALL)
-     * @param format the report format (ALL, HTML, CSV, JSON, etc.)
-     * @param exceptions a collection of exceptions that may have occurred
-     * during the analysis
+     * @param groupId         the Maven groupId
+     * @param artifactId      the Maven artifactId
+     * @param version         the Maven version
+     * @param outputDir       the path to the output directory (can include the full
+     *                        file name if the format is not ALL)
+     * @param format          the report format (ALL, HTML, CSV, JSON, etc.)
+     * @param exceptions      a collection of exceptions that may have occurred
+     *                        during the analysis
      * @throws ReportException thrown if there is an error generating the report
      */
     public synchronized void writeReports(String applicationName, @Nullable final String groupId,
@@ -916,7 +914,7 @@ public class Engine implements FileFilter, AutoCloseable {
         }
 //        final DatabaseProperties prop = database.getDatabaseProperties();
         final ReportGenerator r = new ReportGenerator(applicationName, groupId, artifactId, version,
-                dependencies, getAnalyzers(),  settings, exceptions);
+                dependencies, getAnalyzers(), settings, exceptions);
         try {
             r.write(outputDir.getAbsolutePath(), format);
         } catch (ReportException ex) {
@@ -927,147 +925,10 @@ public class Engine implements FileFilter, AutoCloseable {
     }
     //CSON: LineLength
 
-    public File creatSJsonFile(String path){
-        try {
-            File file = new File(path);
-
-
-            if (!file.getParentFile().exists()) { // 如果父目录不存在，创建父目录
-                file.getParentFile().mkdirs();
-            }
-            if (file.exists()) { // 如果已存在,删除旧文件
-                file.delete();
-            }
-            file.createNewFile();
-            return file;
-        }        catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-
-    }
-
-    public void writeJsonFile(File file , JSONObject root){
-        try {
-            String jsonString1 = formatJson(root.toString());
-            // 将格式化后的字符串写入文件
-            Writer write1 = new OutputStreamWriter(new FileOutputStream(file), "UTF-8");
-            write1.write(jsonString1);
-            write1.flush();
-            write1.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
-
-
-
 
     /**
      * 构建依赖树。
      */
-    protected void buildDependencyTree() throws XmlPullParserException {
-
-
-        HashSet<String> groups = new HashSet<>();
-//
-        JarAnalyzer jarAnalyzer =new JarAnalyzer();
-//
-        JSONObject root1 = new JSONObject();
-        JSONObject root4 = new JSONObject();
-
-        JSONArray nodes = new JSONArray();
-        JSONArray combos = new JSONArray();
-
-
-        String nodePath = "./node.json";
-        String nodEedgePath = "./nodeedge.json";
-
-
-        try {
-            File file1 = creatSJsonFile(nodePath);
-            File file4 = creatSJsonFile(nodEedgePath);
-//
-//
-//
-//
-//
-            int index = 0;
-            for (Dependency dependency : dependencies
-            ) {
-
-                //
-                jarAnalyzer.analyzeIntro(dependency, dependencies, index++, MARKFILE);
-
-
-
-
-
-                if(!groups.contains(dependency.Groupname))
-                {
-
-                    JSONObject node = new JSONObject();
-                    JSONObject combo = new JSONObject();
-
-                    node.put("id",  dependency.getDisplayFileName());
-                    node.put("level", dependency.level);
-                    node.put("label", dependency.artifactid);
-                    node.put("comboId", dependency.Groupname);
-                    node.put("mark", 0);
-
-                    combo.put("label", dependency.Groupname);
-                    combo.put("id", dependency.Groupname);
-                    combo.put("comboId", dependency.level);
-                    combo.put("mark",0);
-
-
-                    nodes.put(node);
-                    combos.put(combo);
-                    groups.add(dependency.Groupname);
-
-                }
-
-                else{
-                    JSONObject node = new JSONObject();
-
-                    node.put("id",  dependency.getDisplayFileName());
-                    node.put("level", dependency.level);
-                    node.put("mark", 0);
-                    node.put("label", dependency.getDisplayFileName());
-                    node.put("comboId", dependency.Groupname);
-                    nodes.put(node);
-
-
-                }
-
-
-
-
-            }
-
-
-            root1.put("nodes", nodes);
-            writeJsonFile(file1,root1);
-
-            JSONArray nodeEdges = new JSONArray();
-
-            //加边
-            jarAnalyzer.topoSort(nodeEdges,dependencies);
-
-
-            root4.put("nodeEdges", nodeEdges);
-            writeJsonFile(file4,root4);
-
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
-
-    }
-
 
 
     /**
@@ -1122,7 +983,7 @@ public class Engine implements FileFilter, AutoCloseable {
          * Constructs a new mode.
          *
          * @param databaseRequired if the database is required for the mode
-         * @param phases the analysis phases to include in the mode
+         * @param phases           the analysis phases to include in the mode
          */
         Mode(boolean databaseRequired, AnalysisPhase... phases) {
             this.databaseRequired = databaseRequired;
