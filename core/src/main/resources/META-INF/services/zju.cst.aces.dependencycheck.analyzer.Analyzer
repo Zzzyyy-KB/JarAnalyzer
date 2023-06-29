@@ -1,0 +1,4 @@
+zju.cst.aces.dependencycheck.analyzer.ArchiveAnalyzer
+zju.cst.aces.dependencycheck.analyzer.JarAnalyzer
+zju.cst.aces.dependencycheck.analyzer.DependencyBundlingAnalyzer
+zju.cst.aces.dependencycheck.analyzer.DependencyMergingAnalyzer
