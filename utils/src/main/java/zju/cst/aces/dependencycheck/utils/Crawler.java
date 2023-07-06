@@ -65,6 +65,14 @@ public class Crawler {
         httpClient.close();
         return res;
     }
-    // 定义主方法
 
+    public static void main(String[] args) {
+        String str = "Ljava/util/jar/JarFile;Ljava/util/jar/JarEntry;Ljava/util/Set<Lorg/objectweb/asm/tree/ClassNode;>;)Ljava/util/Set<Lorg/objectweb/asm/tree/ClassNode;>;";
+        String parts[]=str.split("[;<]");
+        for (String part: parts
+             ) {
+            System.out.println(part);
+
+        }
+    }
 }

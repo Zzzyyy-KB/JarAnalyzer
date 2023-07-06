@@ -25,9 +25,6 @@ public class demo {
         try{  String[] scanfiles = new String[]{"D:\\java\\code-similarity-0.0.2.jar"};
             String[] oF=new String[]{"html"};
             String[] excl = new String[]{""};
-
-
-
             demo.runScan("D:\\1postgraduate", oF, "", scanfiles
                     , excl, 0, 11,"./inputjson.json");}
         catch( ExceptionCollection | ReportException ex) {

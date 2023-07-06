@@ -251,7 +251,6 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 
     public static HashMap<Integer, Dependency> ThirdGroupDependencies = new HashMap<>();
 
-    public static HashMap<Dependency, Dependency> NoPomJarIntroFromPom = new HashMap<>();
 
     public static HashMap<Integer, Dependency> NPIJars = new HashMap<>();
 
@@ -672,7 +671,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 
     public void searchPomAndDetectIntro(Dependency dependency, List<Dependency> dcDependencies) {
         try {
-            dependency.level = "four-third";
+            dependency.level = "third";
 
             String level = dependency.getFileName().substring(dependency.getFileName().lastIndexOf("-") + 1, dependency.getDisplayFileName().lastIndexOf(".jar"));
             int index = findIntroNoPomJars.get(dependency);
@@ -680,7 +679,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
             Crawler crawler = new Crawler("https://repo1.maven.org/maven2/" + dependency.Groupname.replace(".", "/") + "/" + dependency.artifactid + "/" + level + "/" + pomName);
             ArrayList<String> dependecies = crawler.Crawl();
             if (dependecies == null) {
-                System.out.println("还是没有的：" + dependency.getFileName());
+//                System.out.println("还是没有的：" + dependency.getFileName());
                 return;
             }
             for (String d_name : dependecies) {
@@ -695,9 +694,10 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 
 
     public void detectNPIJar(List<Dependency> dcDependencies) {
+        FunctionUtil functionUtil =new FunctionUtil();
 
         for (int i = 0; i < dcDependencies.size(); i++) {
-            FunctionUtil.ClassPaths = FunctionUtil.ClassPaths.concat(dcDependencies.get(i).getActualFilePath().replace('\\', '/') + File.pathSeparatorChar);
+            functionUtil.ClassPaths = FunctionUtil.ClassPaths.concat(dcDependencies.get(i).getActualFilePath().replace('\\', '/') + File.pathSeparatorChar);
 
             //排除一方、二方库以及war包后的 非pom引入jar包
             if (dcDependencies.get(i).level != "own" && dcDependencies.get(i).level != "direct") {
@@ -713,17 +713,22 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 
 //        //找到一方、二方库jar的所有public函数
         for (Dependency owndependency : OwnGroupDependencies.values()) {
-            String classfunctionstr = FunctionUtil.functionDetect(owndependency.getActualFilePath().replace('\\', '/'), owndependency.artifactid, true);
-            FunctionUtil.findAllSig(owndependency.getActualFilePath().replace('\\', '/'),"own");
-
-            if (classfunctionstr != "")
+            String classfunctionstr = functionUtil.functionDetect(owndependency.getActualFilePath().replace('\\', '/'), owndependency.artifactid, "own");
+//            FunctionUtil.findAllSig(owndependency.getActualFilePath().replace('\\', '/'),"own");
+            if (classfunctionstr != ""){
                 FunctionUtil.OWNJarsFunctions.put(owndependency.getDisplayFileName(), classfunctionstr);
+                FunctionUtil.OwnGroupDependenciesFilePaths.put(owndependency.getDisplayFileName(), owndependency.getActualFilePath().replace('\\', '/'));
+
+            }
         }
         for (Dependency directdependency : DirectGroupDependencies.values()) {
-            String classfunctionstr = FunctionUtil.functionDetect(directdependency.getActualFilePath().replace('\\', '/'), directdependency.artifactid, true);
-            FunctionUtil.findAllSig(directdependency.getActualFilePath().replace('\\', '/'),"direct");
-            if (classfunctionstr != "")
+
+            String classfunctionstr = functionUtil.functionDetect(directdependency.getActualFilePath().replace('\\', '/'), directdependency.artifactid, "direct");
+//            FunctionUtil.findAllSig(directdependency.getActualFilePath().replace('\\', '/'),"direct");
+            if (classfunctionstr != ""){
                 FunctionUtil.DIRECTJarsFunctions.put(directdependency.getDisplayFileName(), classfunctionstr);
+                FunctionUtil.DirectGroupDependenciesFilePaths.put(directdependency.getDisplayFileName(), directdependency.getActualFilePath().replace('\\', '/'));
+            }
         }
 
         for (Dependency thirddependency : ThirdGroupDependencies.values()) {
@@ -736,26 +741,28 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                 }
             }
             if (flag == 1) continue;
-            FunctionUtil.findAllSig(thirddependency.getActualFilePath().replace('\\', '/'),"third");
 
-            String classfunctionstr = FunctionUtil.functionDetect(thirddependency.getActualFilePath().replace('\\', '/'), thirddependency.artifactid, true);
-            if (classfunctionstr != "")
+//            FunctionUtil.findAllSig(thirddependency.getActualFilePath().replace('\\', '/'),"third");
+
+            String classfunctionstr = functionUtil.functionDetect(thirddependency.getActualFilePath().replace('\\', '/'), thirddependency.artifactid, "third");
+            if (classfunctionstr != "") {
+                FunctionUtil.ThirdGroupDependenciesFilePaths.put(thirddependency.getDisplayFileName(), thirddependency.getActualFilePath().replace('\\', '/'));
                 FunctionUtil.THIRDJarsFunctions.put(thirddependency.getDisplayFileName(), classfunctionstr);
+            }
         }
 
         for (Dependency NPIJar : NPIJars.values()) {
-            String classfunctionstr = FunctionUtil.functionDetect(NPIJar.getActualFilePath().replace('\\', '/'), NPIJar.artifactid, false);
-//            FunctionUtil.findAllSig(NPIJar.getActualFilePath().replace('\\', '/'),"four;");
+//            if(!NPIJar.getDisplayFileName().contains("LatencyUtils")) continue;
+            String classfunctionstr = functionUtil.functionDetect(NPIJar.getActualFilePath().replace('\\', '/'), NPIJar.artifactid, "four");
             if (classfunctionstr != "") {
                 FunctionUtil.NPIJarsFunctions.put(NPIJar.getDisplayFileName(), classfunctionstr);
             } else System.out.println("classfunctionstr为空的孤立Jar包: " + NPIJar.getDisplayFileName());
         }
 
+        functionUtil.CFGBuild();
 
-        FunctionUtil.CFGBuild();
 //        //获取NPIjar的所有函数名int i =0;
 
-        FunctionUtil.findNPIIntro();
 
 
 
@@ -893,7 +900,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 
 //                GroupBehalfNode.put(dependency.getName(),dependency.getName());
 
-                //没有pom文件的默认放在第四层
+                //没有pom文件的存放在ThirdGroupDependencies
                 dependency.Groupname = dependency.getFileName();
                 dependency.artifactid = dependency.getFileName();
                 dependency.level = "four";
