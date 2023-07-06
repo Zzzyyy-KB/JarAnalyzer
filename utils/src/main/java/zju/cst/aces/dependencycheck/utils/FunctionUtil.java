@@ -186,6 +186,7 @@ public class FunctionUtil {
 
     private static void findAllSig(String jarpath, String level) {
         try {
+            boolean find = false;
 
             JarFile jarFile = new JarFile(jarpath);
             Enumeration<JarEntry> entries = jarFile.entries();
@@ -227,7 +228,6 @@ public class FunctionUtil {
                                 ) {
                                     if (part.contains("java")) continue;
                                     if (part != null && part.contains("/")) {
-
                                         switch (level) {
                                             case "own":
                                                 if (OWNJarsClassesDeterminer.get(classname) == null) {
@@ -310,7 +310,9 @@ public class FunctionUtil {
 
         try {
             String npiclazz = npi_class_method.substring(0, npi_class_method.indexOf('_')).replace(".", "/");
-
+//            SimpleDateFormat sdf = new SimpleDateFormat();// 格式化时间
+//            sdf.applyPattern("yyyy-MM-dd HH:mm:ss a");// a为am/pm的标记
+//            Date date = new Date();// 获取当前时间
 
             for (Iterator<Edge> it = callGraph.edgesInto(method); it.hasNext(); ) {
                 //上一个src method 找到了
@@ -323,14 +325,22 @@ public class FunctionUtil {
                     for (String own_class_method : own_class_methods) {
 
                         if (own_class_method.equals(srcClass.getName() + "_" + srcMethod.getName())) {
+//                            date = new Date();
+//                            System.out.println("找到引入包时间：" + sdf.format(date)); // 输出已经格式化的现在时间（24小时制）
                             if (OWNJarsClassesDeterminer == null
                                     || OWNJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) == null
                             ) {
                                 String path = OwnGroupDependenciesFilePaths.get(ownjar);
                                 findAllSig(path, "own");
-                            }
+//                                date = new Date();
+//                                System.out.println("找完sig的时间：" + sdf.format(date)); // 输出已经格式化的现在时间（24小时制）
 
-//                            if (OWNJarsClassesDeterminer != null
+                            }
+                            //说明过滤jdk函数后没有
+                            if (OWNJarsClassesDeterminer == null
+                                    || OWNJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) == null)
+                                continue;
+                            //                            if (OWNJarsClassesDeterminer != null
 //                                    && OWNJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) != null
 //                            ) {
                             for (String signature : OWNJarsClassesDeterminer.get(srcClass.getName().replace(".", "/"))
@@ -342,7 +352,6 @@ public class FunctionUtil {
 
                                 for (String part : parts
                                 ) {
-                                    //去除java的部分 加快效率
                                     if (part.replace("/", ".").contains(npiclazz)) {
                                         System.out.println("一方库Jar包: " + ownjar + " -> 孤立Jar包: " + npijar);
                                         System.out.println("一方库Method: " + own_class_method + " -> Method: " + npi_class_method);
@@ -351,14 +360,13 @@ public class FunctionUtil {
                                             System.out.println("第" + findNPIJARs.size() + "个孤立jar包: " + npijar);
                                             System.out.println("孤立函数" + npi_class_method);
                                         }
+
                                         return true;
                                     }
                                 }
-
-
-//                                }
-
                             }
+//                            date = new Date();
+//                            System.out.println("验证完一方时间：" + sdf.format(date));
 
                         }
                     }
@@ -370,12 +378,20 @@ public class FunctionUtil {
                     String[] direct_class_methods = direct_class_methodstr.split(";");
                     for (String direct_class_method : direct_class_methods) {
                         if (direct_class_method.equals(srcClass.getName() + "_" + srcMethod.getName())) {
+//                            date = new Date();
+//                            System.out.println("找到二方包时间：" + sdf.format(date));
                             if (DIRECTJarsClassesDeterminer == null
                                     || DIRECTJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) == null
                             ) {
                                 String path = DirectGroupDependenciesFilePaths.get(directjar);
                                 findAllSig(path, "direct");
+//                                date = new Date();
+//                                System.out.println("找完二方sig包时间：" + sdf.format(date));
                             }
+                            //说明过滤jdk函数后没有
+                            if (DIRECTJarsClassesDeterminer == null
+                                    || DIRECTJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) == null)
+                                continue;
 //                            if (DIRECTJarsClassesDeterminer != null
 //                                    && DIRECTJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) != null
 //                            ) {
@@ -398,9 +414,9 @@ public class FunctionUtil {
                                         return true;
                                     }
                                 }
-
-
                             }
+//                            date = new Date();
+//                            System.out.println("验证完二方包时间：" + sdf.format(date));
 
 //                            }
                         }
@@ -413,12 +429,21 @@ public class FunctionUtil {
                     String[] third_class_methods = third_class_methodstr.split(";");
                     for (String third_class_method : third_class_methods) {
                         if (third_class_method.equals(srcClass.getName() + "_" + srcMethod.getName())) {
+//                            date = new Date();
+//                            System.out.println("找到三方包时间：" + sdf.format(date));
                             if (THIRDJarsClassesDeterminer == null
                                     || THIRDJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) == null
                             ) {
                                 String path = ThirdGroupDependenciesFilePaths.get(thirdjar);
                                 findAllSig(path, "third");
+//                                date = new Date();
+//                                System.out.println("找完三方sig时间：" + sdf.format(date));
                             }
+
+                            //说明过滤jdk函数后没有
+                            if (THIRDJarsClassesDeterminer == null
+                                    || THIRDJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) == null)
+                                continue;
 //                            if (THIRDJarsClassesDeterminer != null
 //                                    && THIRDJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) != null
 //                            ) {
@@ -442,9 +467,12 @@ public class FunctionUtil {
                                 }
 
 
+
 //                                }
 
                             }
+//                            date = new Date();
+//                            System.out.println("验证完三方包时间：" + sdf.format(date));
                         }
                     }
 
@@ -699,6 +727,10 @@ public class FunctionUtil {
                     //当前NPIjar包中的函数在node中
                     if (npi_class_method.equals(method.getDeclaringClass().getName() + "_" + method.getName())) {
 
+                        SimpleDateFormat sdf = new SimpleDateFormat();// 格式化时间
+                        sdf.applyPattern("yyyy-MM-dd HH:mm:ss a");// a为am/pm的标记
+                        Date date = new Date();// 获取当前时间
+                        System.out.println("现在时间：" + sdf.format(date)); // 输出已经格式化的现在时间（24小时制）
                         tag = findSourceMethod(method, npi_class_method, npijar);
 
 
