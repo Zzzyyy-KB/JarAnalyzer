@@ -1,14 +1,10 @@
 package zju.cst.aces.dependencycheck.utils;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import edu.zju.cst.aces.sootex.ASMParser;
 import edu.zju.cst.aces.sootex.CGType;
 import edu.zju.cst.aces.sootex.SootExecutorUtil;
 import edu.zju.cst.aces.sootex.callgraph.SimpleCallGraphFilter;
 import javafx.util.Pair;
-import org.apache.commons.io.FileUtils;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -22,17 +18,10 @@ import soot.jimple.toolkits.callgraph.CallGraph;
 import soot.jimple.toolkits.callgraph.Edge;
 
 import java.io.*;
-import java.lang.reflect.Method;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import java.util.Map;
 
 
@@ -202,104 +191,108 @@ public class FunctionUtil {
                     ClassReader classReader = new ClassReader(inputStream);
 
                     // 创建一个ClassVisitor对象，重写visit方法
-                    ClassVisitor classVisitor = new ClassVisitor(Opcodes.ASM8) {
-                        String classname = "";
+                    // 创建一个自定义的ClassVisitor
+                    ClassVisitor classVisitor = new MyClassVisitor(level);
+//                    ClassVisitor classVisitor = new ClassVisitor(Opcodes.ASM8) {
+//                        String classname = "";
+//
+//                        @Override
+//                        public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+//                            // 打印类的全限定名
+//                            //调用父类的visit方法
+//                            classname = name;
+//                            super.visit(version, access, name, signature, superName, interfaces);
+//                        }
+//
+//                        @Override
+//                        public MethodVisitor visitMethod(
+//                                final int access,
+//                                final String name,
+//                                final String descriptor,
+//                                final String signature,
+//                                final String[] exceptions) {
+//
+//                            if (signature != null) {
+//                                String[] parts = signature.split("[;<]");
+//
+//                                for (String part : parts
+//                                ) {
+//                                    if (part.contains("java")) continue;
+//                                    if (part != null && part.contains("/")) {
+//                                        switch (level) {
+//                                            case "own":
+//                                                if (OWNJarsClassesDeterminer.get(classname) == null) {
+//                                                    OWNJarsClassesDeterminer.put(classname, new HashSet<>(Collections.singleton(part)));
+//                                                } else OWNJarsClassesDeterminer.get(classname).add(part);
+//                                            case "direct":
+//                                                if (DIRECTJarsClassesDeterminer.get(classname) == null) {
+//                                                    DIRECTJarsClassesDeterminer.put(classname, new HashSet<>(Collections.singleton(part)));
+//                                                } else DIRECTJarsClassesDeterminer.get(classname).add(part);
+//                                            case "third":
+//                                                if (THIRDJarsClassesDeterminer.get(classname) == null) {
+//                                                    THIRDJarsClassesDeterminer.put(classname, new HashSet<>(Collections.singleton(part)));
+//                                                } else THIRDJarsClassesDeterminer.get(classname).add(part);
+//                                        }
+//                                    }
+//                                }
+//                                // 保存类的全限定名
+//
+//                            }
+//
+//
+//                            // 调用父类的visit方法
+//                            MethodVisitor methodVisitor = super.visitMethod(access, name, descriptor, signature, exceptions);
+//                            return methodVisitor;
+//                        }
+//
+//                        @Override
+//                        public FieldVisitor visitField(
+//                                final int access,
+//                                final String name,
+//                                final String descriptor,
+//                                final String signature,
+//                                final Object value) {
+//
+//                            // 保存类的全限定名
+//                            if (signature != null) {
+//                                String[] parts = signature.split("[;<]");
+//                                for (String part : parts
+//                                ) {
+//                                    if (part.contains("java")) continue;
+//                                    if (part != null && part.contains("/")) {
+//                                        switch (level) {
+//                                            case "own":
+//                                                if (OWNJarsClassesDeterminer.get(classname) == null) {
+//                                                    OWNJarsClassesDeterminer.put(classname, new HashSet<>(Collections.singleton(part)));
+//                                                } else OWNJarsClassesDeterminer.get(classname).add(part);
+//                                            case "direct":
+//                                                if (DIRECTJarsClassesDeterminer.get(classname) == null) {
+//                                                    DIRECTJarsClassesDeterminer.put(classname, new HashSet<>(Collections.singleton(part)));
+//                                                } else DIRECTJarsClassesDeterminer.get(classname).add(part);
+//                                            case "third":
+//                                                if (THIRDJarsClassesDeterminer.get(classname) == null) {
+//                                                    THIRDJarsClassesDeterminer.put(classname, new HashSet<>(Collections.singleton(part)));
+//                                                } else THIRDJarsClassesDeterminer.get(classname).add(part);
+//                                        }
+//                                    }
+//                                }
+////                                String str = sig.toString();
+//
+//                            }
+////                            System.out.println("The fully qualified field name is: " + name);
+////                            System.out.println("The fully qualified field descriptor is: " + descriptor);
+//                            // 调用父类的visit方法
+//                            FieldVisitor fieldVisitor = super.visitField(access, name, descriptor, signature, value);
+//                            return fieldVisitor;
+//
+//
+//                        }
+//                    };
 
-                        @Override
-                        public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-                            // 打印类的全限定名
-                            //调用父类的visit方法
-                            classname = name;
-                            super.visit(version, access, name, signature, superName, interfaces);
-                        }
-
-                        @Override
-                        public MethodVisitor visitMethod(
-                                final int access,
-                                final String name,
-                                final String descriptor,
-                                final String signature,
-                                final String[] exceptions) {
-
-                            if (signature != null) {
-                                String[] parts = signature.split("[;<]");
-
-                                for (String part : parts
-                                ) {
-                                    if (part.contains("java")) continue;
-                                    if (part != null && part.contains("/")) {
-                                        switch (level) {
-                                            case "own":
-                                                if (OWNJarsClassesDeterminer.get(classname) == null) {
-                                                    OWNJarsClassesDeterminer.put(classname, new HashSet<>(Collections.singleton(part)));
-                                                } else OWNJarsClassesDeterminer.get(classname).add(part);
-                                            case "direct":
-                                                if (DIRECTJarsClassesDeterminer.get(classname) == null) {
-                                                    DIRECTJarsClassesDeterminer.put(classname, new HashSet<>(Collections.singleton(part)));
-                                                } else DIRECTJarsClassesDeterminer.get(classname).add(part);
-                                            case "third":
-                                                if (THIRDJarsClassesDeterminer.get(classname) == null) {
-                                                    THIRDJarsClassesDeterminer.put(classname, new HashSet<>(Collections.singleton(part)));
-                                                } else THIRDJarsClassesDeterminer.get(classname).add(part);
-                                        }
-                                    }
-                                }
-                                // 保存类的全限定名
-
-                            }
-
-
-                            // 调用父类的visit方法
-                            MethodVisitor methodVisitor = super.visitMethod(access, name, descriptor, signature, exceptions);
-                            return methodVisitor;
-                        }
-
-                        @Override
-                        public FieldVisitor visitField(
-                                final int access,
-                                final String name,
-                                final String descriptor,
-                                final String signature,
-                                final Object value) {
-
-                            // 保存类的全限定名
-                            if (signature != null) {
-                                String[] parts = signature.split("[;<]");
-                                for (String part : parts
-                                ) {
-                                    if (part.contains("java")) continue;
-                                    if (part != null && part.contains("/")) {
-                                        switch (level) {
-                                            case "own":
-                                                if (OWNJarsClassesDeterminer.get(classname) == null) {
-                                                    OWNJarsClassesDeterminer.put(classname, new HashSet<>(Collections.singleton(part)));
-                                                } else OWNJarsClassesDeterminer.get(classname).add(part);
-                                            case "direct":
-                                                if (DIRECTJarsClassesDeterminer.get(classname) == null) {
-                                                    DIRECTJarsClassesDeterminer.put(classname, new HashSet<>(Collections.singleton(part)));
-                                                } else DIRECTJarsClassesDeterminer.get(classname).add(part);
-                                            case "third":
-                                                if (THIRDJarsClassesDeterminer.get(classname) == null) {
-                                                    THIRDJarsClassesDeterminer.put(classname, new HashSet<>(Collections.singleton(part)));
-                                                } else THIRDJarsClassesDeterminer.get(classname).add(part);
-                                        }
-                                    }
-                                }
-//                                String str = sig.toString();
-
-                            }
-//                            System.out.println("The fully qualified field name is: " + name);
-//                            System.out.println("The fully qualified field descriptor is: " + descriptor);
-                            // 调用父类的visit方法
-                            FieldVisitor fieldVisitor = super.visitField(access, name, descriptor, signature, value);
-                            return fieldVisitor;
-
-
-                        }
-                    };
-                    // 调用ClassReader的accept方法，传入ClassVisitor对象和读取模式
+                    //调用ClassReader的accept方法，传入ClassVisitor对象和读取模式
                     classReader.accept(classVisitor, 0);
                 }
+
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -325,24 +318,20 @@ public class FunctionUtil {
                     for (String own_class_method : own_class_methods) {
 
                         if (own_class_method.equals(srcClass.getName() + "_" + srcMethod.getName())) {
-//                            date = new Date();
-//                            System.out.println("找到引入包时间：" + sdf.format(date)); // 输出已经格式化的现在时间（24小时制）
+
                             if (OWNJarsClassesDeterminer == null
                                     || OWNJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) == null
                             ) {
                                 String path = OwnGroupDependenciesFilePaths.get(ownjar);
                                 findAllSig(path, "own");
-//                                date = new Date();
-//                                System.out.println("找完sig的时间：" + sdf.format(date)); // 输出已经格式化的现在时间（24小时制）
+
 
                             }
                             //说明过滤jdk函数后没有
-                            if (OWNJarsClassesDeterminer == null
-                                    || OWNJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) == null)
-                                continue;
-                            //                            if (OWNJarsClassesDeterminer != null
-//                                    && OWNJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) != null
-//                            ) {
+//                            if (OWNJarsClassesDeterminer == null
+//                                    || OWNJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) == null)
+//                                continue;
+
                             for (String signature : OWNJarsClassesDeterminer.get(srcClass.getName().replace(".", "/"))
                             ) {
                                 if (signature == null) continue;
@@ -389,9 +378,9 @@ public class FunctionUtil {
 //                                System.out.println("找完二方sig包时间：" + sdf.format(date));
                             }
                             //说明过滤jdk函数后没有
-                            if (DIRECTJarsClassesDeterminer == null
-                                    || DIRECTJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) == null)
-                                continue;
+//                            if (DIRECTJarsClassesDeterminer == null
+//                                    || DIRECTJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) == null)
+//                                continue;
 //                            if (DIRECTJarsClassesDeterminer != null
 //                                    && DIRECTJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) != null
 //                            ) {
@@ -441,9 +430,9 @@ public class FunctionUtil {
                             }
 
                             //说明过滤jdk函数后没有
-                            if (THIRDJarsClassesDeterminer == null
-                                    || THIRDJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) == null)
-                                continue;
+//                            if (THIRDJarsClassesDeterminer == null
+//                                    || THIRDJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) == null)
+//                                continue;
 //                            if (THIRDJarsClassesDeterminer != null
 //                                    && THIRDJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) != null
 //                            ) {
@@ -467,7 +456,6 @@ public class FunctionUtil {
                                 }
 
 
-
 //                                }
 
                             }
@@ -478,194 +466,13 @@ public class FunctionUtil {
 
                 }
 
-//            for (String anotherNpiJar : NPIJarsFunctions.keySet()) {
-//                if(anotherNpiJar.equals(npijar)) continue;
-//                String ano_npi_class_methodstr = NPIJarsFunctions.get(anotherNpiJar);
-//                String[] ano_npi_class_methods = ano_npi_class_methodstr.split(";");
-//                for (String ano_npi_class_method : ano_npi_class_methods) {
-//                    if (ano_npi_class_method.equals(srcClass.getName() + "_" + srcMethod.getName())) {
-//
-////                        if (DIRECTJarsClassesDeterminer!=null&&DIRECTJarsClassesDeterminer.get(srcClass.getName())!=null&&DIRECTJarsClassesDeterminer.get(srcClass.getName()).contains(npiclazz)) {
-//
-//                            System.out.println("NPI库Jar包: " + anotherNpiJar + " -> 孤立Jar包: " + npijar);
-//                            System.out.println("NPI库Method: " + ano_npi_class_method + " -> Method: " + npi_class_method);
-//                            flag = true;
-//                            if (!findNPIJARs.contains(npijar)) {
-//                                findNPIJARs.add(npijar);
-//                                System.out.println("第" + findNPIJARs.size() + "个孤立jar包: " + npijar);
-//                                System.out.println("孤立函数" + npi_class_method);
-//                            }
-//                            return flag;
-////                        }
-//                    }
-//                }
-//            }
-
             }
         } catch (NullPointerException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
         }
 
         return false;
     }
-//    public static boolean findSourceMethod(SootMethod method, String npi_class_method, String npijar, boolean flag) {
-//
-//        try {
-//            String npiclazz = npi_class_method.substring(0, npi_class_method.indexOf('_')).replace(".", "/");
-//
-//
-//            for (Iterator<Edge> it = callGraph.edgesInto(method); it.hasNext(); ) {
-//                //上一个src method 找到了
-//                if (flag) return flag;
-//                Edge edge = it.next();
-//                SootMethod srcMethod = edge.src();
-//                SootClass srcClass = edge.src().getDeclaringClass();
-//                for (String ownjar : OWNJarsFunctions.keySet()) {
-//                    String own_class_methodstr = OWNJarsFunctions.get(ownjar);
-//                    String[] own_class_methods = own_class_methodstr.split(";");
-//                    for (String own_class_method : own_class_methods) {
-//
-//                        if (own_class_method.equals(srcClass.getName() + "_" + srcMethod.getName())) {
-//                            if (OWNJarsClassesDeterminer != null
-//                                    && OWNJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) != null
-//                            ) {
-//                                for (String signature : OWNJarsClassesDeterminer.get(srcClass.getName().replace(".", "/"))
-//                                ) {
-//                                    if (signature == null) continue;
-//
-//                                    String[] parts = signature.split(";");
-//
-//
-//                                    for (String part : parts
-//                                    ) {
-//                                        //去除java的部分 加快效率
-//                                        if (part.replace("/", ".").contains(npiclazz)) {
-//                                            System.out.println("一方库Jar包: " + ownjar + " -> 孤立Jar包: " + npijar);
-//                                            System.out.println("一方库Method: " + own_class_method + " -> Method: " + npi_class_method);
-//                                            if (!findNPIJARs.contains(npijar)) {
-//                                                findNPIJARs.add(npijar);
-//                                                System.out.println("第" + findNPIJARs.size() + "个孤立jar包: " + npijar);
-//                                                System.out.println("孤立函数" + npi_class_method);
-//                                            }
-//                                            flag = true;
-//                                            return flag;
-//                                        }
-//                                    }
-//
-//
-//                                }
-//
-//                            }
-//
-//                        }
-//                    }
-//
-//                }
-//                for (String directjar : DIRECTJarsFunctions.keySet()) {
-//
-//                    String direct_class_methodstr = DIRECTJarsFunctions.get(directjar);
-//                    String[] direct_class_methods = direct_class_methodstr.split(";");
-//                    for (String direct_class_method : direct_class_methods) {
-//                        if (direct_class_method.equals(srcClass.getName() + "_" + srcMethod.getName())) {
-//                            if (DIRECTJarsClassesDeterminer != null
-//                                    && DIRECTJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) != null
-//                            ) {
-//                                for (String signature : DIRECTJarsClassesDeterminer.get(srcClass.getName().replace(".", "/"))
-//                                ) {
-//                                    if (signature == null) continue;
-//
-//                                    String[] parts = signature.split(";");
-//
-//                                    for (String part : parts
-//                                    ) {
-//                                        if (part.replace("/", ".").contains(npiclazz)) {
-//                                            System.out.println("二方库Jar包: " + directjar + " -> 孤立Jar包: " + npijar);
-//                                            System.out.println("二方库Method: " + direct_class_method + " -> Method: " + npi_class_method);
-//                                            if (!findNPIJARs.contains(npijar)) {
-//                                                findNPIJARs.add(npijar);
-//                                                System.out.println("第" + findNPIJARs.size() + "个孤立jar包: " + npijar);
-//                                                System.out.println("孤立函数" + npi_class_method);
-//                                            }
-//                                            flag = true;
-//                                            return flag;
-//                                        }
-//                                    }
-//
-//
-//                                }
-//
-//                            }
-//                        }
-//                    }
-//                }
-//                for (String thirdjar : THIRDJarsFunctions.keySet()) {
-//
-//                    String third_class_methodstr = THIRDJarsFunctions.get(thirdjar);
-//                    String[] third_class_methods = third_class_methodstr.split(";");
-//                    for (String third_class_method : third_class_methods) {
-//                        if (third_class_method.equals(srcClass.getName() + "_" + srcMethod.getName())) {
-//                            if (THIRDJarsClassesDeterminer != null
-//                                    && THIRDJarsClassesDeterminer.get(srcClass.getName().replace(".", "/")) != null
-//                            ) {
-//                                for (String signature : THIRDJarsClassesDeterminer.get(srcClass.getName().replace(".", "/"))
-//                                ) {
-//                                    if (signature == null) continue;
-//                                    String[] parts = signature.split(";");
-//
-//                                    for (String part : parts
-//                                    ) {
-//                                        if (part.contains(npiclazz)) {
-//                                            System.out.println("三方库Jar包: " + thirdjar + " -> 孤立Jar包: " + npijar);
-//                                            System.out.println("三方库Method: " + third_class_method + " -> Method: " + npi_class_method);
-//                                            if (!findNPIJARs.contains(npijar)) {
-//                                                findNPIJARs.add(npijar);
-//                                                System.out.println("第" + findNPIJARs.size() + "个孤立jar包: " + npijar);
-//                                                System.out.println("孤立函数" + npi_class_method);
-//                                            }
-//                                            flag = true;
-//                                            return flag;
-//                                        }
-//                                    }
-//
-//
-//                                }
-//
-//                            }
-//                        }
-//                    }
-//
-//                }
-//
-////            for (String anotherNpiJar : NPIJarsFunctions.keySet()) {
-////                if(anotherNpiJar.equals(npijar)) continue;
-////                String ano_npi_class_methodstr = NPIJarsFunctions.get(anotherNpiJar);
-////                String[] ano_npi_class_methods = ano_npi_class_methodstr.split(";");
-////                for (String ano_npi_class_method : ano_npi_class_methods) {
-////                    if (ano_npi_class_method.equals(srcClass.getName() + "_" + srcMethod.getName())) {
-////
-//////                        if (DIRECTJarsClassesDeterminer!=null&&DIRECTJarsClassesDeterminer.get(srcClass.getName())!=null&&DIRECTJarsClassesDeterminer.get(srcClass.getName()).contains(npiclazz)) {
-////
-////                            System.out.println("NPI库Jar包: " + anotherNpiJar + " -> 孤立Jar包: " + npijar);
-////                            System.out.println("NPI库Method: " + ano_npi_class_method + " -> Method: " + npi_class_method);
-////                            flag = true;
-////                            if (!findNPIJARs.contains(npijar)) {
-////                                findNPIJARs.add(npijar);
-////                                System.out.println("第" + findNPIJARs.size() + "个孤立jar包: " + npijar);
-////                                System.out.println("孤立函数" + npi_class_method);
-////                            }
-////                            return flag;
-//////                        }
-////                    }
-////                }
-////            }
-//
-//            }
-//        } catch (NullPointerException e) {
-//            e.printStackTrace();
-//        }
-//
-//        return flag;
-//    }
 
     private String getMethodSignature(String className, String methodName, String methodDescriptor) {
         String returnType = Type.getReturnType(methodDescriptor).getClassName();
@@ -711,6 +518,7 @@ public class FunctionUtil {
     static Set<String> findNPIJARs = new HashSet<>();
 
     static ArrayList<SootMethod> sootMethods = new ArrayList<>();
+
     private void findNPIIntro() {
         for (Iterator<MethodOrMethodContext> iterator = Scene.v().getReachableMethods().listener(); iterator.hasNext(); ) {
             SootMethod method = (SootMethod) iterator.next();
@@ -726,11 +534,6 @@ public class FunctionUtil {
                 for (String npi_class_method : npi_class_methods) {
                     //当前NPIjar包中的函数在node中
                     if (npi_class_method.equals(method.getDeclaringClass().getName() + "_" + method.getName())) {
-
-                        SimpleDateFormat sdf = new SimpleDateFormat();// 格式化时间
-                        sdf.applyPattern("yyyy-MM-dd HH:mm:ss a");// a为am/pm的标记
-                        Date date = new Date();// 获取当前时间
-                        System.out.println("现在时间：" + sdf.format(date)); // 输出已经格式化的现在时间（24小时制）
                         tag = findSourceMethod(method, npi_class_method, npijar);
 
 
@@ -746,7 +549,6 @@ public class FunctionUtil {
 
         }
         // 关闭线程池
-//        executor.shutdown();
 
 
         for (String leftnpijar : NPIJarsFunctions.keySet()) {
@@ -754,37 +556,160 @@ public class FunctionUtil {
                 System.out.println("没找到引入的孤立jar包: " + leftnpijar);
             }
         }
-        SimpleDateFormat sdf = new SimpleDateFormat();// 格式化时间
-        sdf.applyPattern("yyyy-MM-dd HH:mm:ss a");// a为am/pm的标记
-        Date date = new Date();// 获取当前时间
-        System.out.println("现在时间：" + sdf.format(date)); // 输出已经格式化的现在时间（24小时制）
     }
 
-//    class MyTask implements Runnable {
-//        // 定义一个数组和一个索引
-//        // 重写run方法
-//        private SootMethod method;
-//        private String npi_class_method;
-//        private String npijar;
-//
-//
-//        MyTask(){}
-//        MyTask(SootMethod method, String npi_class_method, String npijar) {
-//            this.method = method;
-//            this.npi_class_method = npi_class_method;
-//            this.npijar = npijar;
-//        }
-//
-//        @Override
-//        public void run() {
-//            try {
-//                // 打印当前线程的名字和索引
-//                findSourceMethod(method, npi_class_method, npijar);
-//
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        }
-//    }
+    static class MyClassVisitor extends ClassVisitor {
+        String classname = "";
+        private String level = "";
+
+        public MyClassVisitor(String level) {
+            super(Opcodes.ASM8);
+            this.level = level;
+        }
+
+
+        @Override
+        public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+            // 打印类的全限定名
+            //调用父类的visit方法
+            classname = name;
+            super.visit(version, access, name, signature, superName, interfaces);
+        }
+
+        @Override
+        public MethodVisitor visitMethod(
+                final int access,
+                final String name,
+                final String descriptor,
+                final String signature,
+                final String[] exceptions) {
+
+            if (signature != null) {
+                String[] parts = signature.split("[;<]");
+
+                for (String part : parts
+                ) {
+                    if (part.contains("java")) continue;
+                    if (part != null && part.contains("/")) {
+                        switch (level) {
+                            case "own":
+                                if (OWNJarsClassesDeterminer.get(classname) == null) {
+                                    OWNJarsClassesDeterminer.put(classname, new HashSet<>(Collections.singleton(part)));
+                                } else OWNJarsClassesDeterminer.get(classname).add(part);
+                            case "direct":
+                                if (DIRECTJarsClassesDeterminer.get(classname) == null) {
+                                    DIRECTJarsClassesDeterminer.put(classname, new HashSet<>(Collections.singleton(part)));
+                                } else DIRECTJarsClassesDeterminer.get(classname).add(part);
+                            case "third":
+                                if (THIRDJarsClassesDeterminer.get(classname) == null) {
+                                    THIRDJarsClassesDeterminer.put(classname, new HashSet<>(Collections.singleton(part)));
+                                } else THIRDJarsClassesDeterminer.get(classname).add(part);
+                        }
+                    }
+                }
+                // 保存类的全限定名
+
+            }
+
+
+            // 调用父类的visit方法
+            MethodVisitor mv = new MyMethodVisitor(level, classname);
+
+            return mv;
+        }
+
+        @Override
+        public FieldVisitor visitField(
+                final int access,
+                final String name,
+                final String descriptor,
+                final String signature,
+                final Object value) {
+
+            // 保存类的全限定名
+            if (signature != null) {
+                String[] parts = signature.split("[;<]");
+                for (String part : parts
+                ) {
+                    if (part.contains("java")) continue;
+                    if (part != null && part.contains("/")) {
+                        switch (level) {
+                            case "own":
+                                if (OWNJarsClassesDeterminer.get(classname) == null) {
+                                    OWNJarsClassesDeterminer.put(classname, new HashSet<>(Collections.singleton(part)));
+                                } else OWNJarsClassesDeterminer.get(classname).add(part);
+                            case "direct":
+                                if (DIRECTJarsClassesDeterminer.get(classname) == null) {
+                                    DIRECTJarsClassesDeterminer.put(classname, new HashSet<>(Collections.singleton(part)));
+                                } else DIRECTJarsClassesDeterminer.get(classname).add(part);
+                            case "third":
+                                if (THIRDJarsClassesDeterminer.get(classname) == null) {
+                                    THIRDJarsClassesDeterminer.put(classname, new HashSet<>(Collections.singleton(part)));
+                                } else THIRDJarsClassesDeterminer.get(classname).add(part);
+                        }
+                    }
+                }
+//                                String str = sig.toString();
+
+            }
+//                            System.out.println("The fully qualified field name is: " + name);
+//                            System.out.println("The fully qualified field descriptor is: " + descriptor);
+            // 调用父类的visit方法
+            FieldVisitor fieldVisitor = super.visitField(access, name, descriptor, signature, value);
+            return fieldVisitor;
+            // 重写visitMethod方法，用于访问类中声明的方法
+
+
+        }
+    }
+
+    // 自定义的MethodVisitor，继承自ASM提供的MethodVisitor
+    static class MyMethodVisitor extends MethodVisitor {
+        String level = "";
+        String classname = "";
+
+        public MyMethodVisitor(String level, String classname) {
+            super(Opcodes.ASM8);
+            this.level = level;
+            this.classname = classname;
+
+        }
+
+        // 重写visitLocalVariable方法，用于访问函数内部的局部变量
+        @Override
+        public void visitLocalVariable(
+                final String name,
+                final String descriptor,
+                final String signature,
+                final Label start,
+                final Label end,
+                final int index) {
+            if (signature != null) {
+                String[] parts = signature.split("[;<]");
+                for (String part : parts
+                ) {
+                    if (part.contains("java")) continue;
+                    if (part != null && part.contains("/")) {
+                        switch (level) {
+                            case "own":
+                                if (OWNJarsClassesDeterminer.get(classname) == null) {
+                                    OWNJarsClassesDeterminer.put(classname, new HashSet<>(Collections.singleton(part)));
+                                } else OWNJarsClassesDeterminer.get(classname).add(part);
+                            case "direct":
+                                if (DIRECTJarsClassesDeterminer.get(classname) == null) {
+                                    DIRECTJarsClassesDeterminer.put(classname, new HashSet<>(Collections.singleton(part)));
+                                } else DIRECTJarsClassesDeterminer.get(classname).add(part);
+                            case "third":
+                                if (THIRDJarsClassesDeterminer.get(classname) == null) {
+                                    THIRDJarsClassesDeterminer.put(classname, new HashSet<>(Collections.singleton(part)));
+                                } else THIRDJarsClassesDeterminer.get(classname).add(part);
+                        }
+                    }
+                }
+
+            }
+        }
+    }
 
 }
+
