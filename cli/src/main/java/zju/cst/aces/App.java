@@ -124,53 +124,7 @@ public class App {
             prepareLogger(verboseLog);
         }
 
-        if (cli.isPurge()) {
-            final String connStr = cli.getStringArgument(CliParser.ARGUMENT.CONNECTION_STRING);
-            if (connStr != null) {
-                LOGGER.error("Unable to purge the database when using a non-default connection string");
-                exitCode = -3;
-            } else {
-                try {
-                    populateSettings(cli);
-                } catch (InvalidSettingException ex) {
-                    LOGGER.error(ex.getMessage());
-                    LOGGER.debug(ERROR_LOADING_PROPERTIES_FILE, ex);
-                    exitCode = -4;
-                    return exitCode;
-                }
-                try (Engine engine = new Engine(Engine.Mode.EVIDENCE_PROCESSING, settings)) {
-//                    if (!engine.purge()) {
-//                        exitCode = -7;
-//                        return exitCode;
-//                    }
-                } finally {
-                    settings.cleanup();
-                }
-            }
-        } else if (cli.isGetVersion()) {
-            cli.printVersionInfo();
-        } else if (cli.isUpdateOnly()) {
-            try {
-                populateSettings(cli);
-                settings.setBoolean(Settings.KEYS.AUTO_UPDATE, true);
-            } catch (InvalidSettingException ex) {
-                LOGGER.error(ex.getMessage());
-                LOGGER.debug(ERROR_LOADING_PROPERTIES_FILE, ex);
-                exitCode = -4;
-                return exitCode;
-            }
-//            try {
-//                runUpdateOnly();
-//            } catch (UpdateException ex) {
-//                LOGGER.error(ex.getMessage(), ex);
-//                exitCode = -8;
-//            } catch (DatabaseException ex) {
-//                LOGGER.error(ex.getMessage(), ex);
-//                exitCode = -9;
-//            } finally {
-//                settings.cleanup();
-//            }
-        } else if (cli.isRunScan()) {
+        if (cli.isRunScan()) {
             try {
                 populateSettings(cli);
             } catch (InvalidSettingException ex) {
@@ -234,7 +188,7 @@ public class App {
      * collection.
      */
     private int runScan(String reportDirectory, String[] outputFormats, String applicationName, String[] files,
-            String[] excludes, int symLinkDepth, float cvssFailScore,String markfile) throws
+                        String[] excludes, int symLinkDepth, float cvssFailScore,String markfile) throws
             ExceptionCollection, ReportException {
         Engine engine = null;
         try {
@@ -535,7 +489,7 @@ public class App {
                 cli.getStringArgument(CliParser.ARGUMENT.OSSINDEX_PASSWORD, Settings.KEYS.ANALYZER_OSSINDEX_PASSWORD));
         settings.setStringIfNotEmpty(Settings.KEYS.ANALYZER_OSSINDEX_WARN_ONLY_ON_REMOTE_ERRORS,
                 cli.getStringArgument(CliParser.ARGUMENT.OSSINDEX_WARN_ONLY_ON_REMOTE_ERRORS,
-                    Settings.KEYS.ANALYZER_OSSINDEX_WARN_ONLY_ON_REMOTE_ERRORS));
+                        Settings.KEYS.ANALYZER_OSSINDEX_WARN_ONLY_ON_REMOTE_ERRORS));
         settings.setFloat(Settings.KEYS.JUNIT_FAIL_ON_CVSS,
                 cli.getFloatArgument(CliParser.ARGUMENT.FAIL_JUNIT_ON_CVSS, 0));
         settings.setBooleanIfNotNull(Settings.KEYS.ANALYZER_ARTIFACTORY_ENABLED,

@@ -470,7 +470,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 //                System.out.println(dependency.getDisplayFileName());
             }
             dependency.level = name_dependency.get(influenceJarName).level;
-
+            return;
         }
 
         try (JarFile jar = new JarFile(dependency.getActualFilePath(), false)) {
@@ -501,13 +501,12 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                     if (dependency.artifactid == null) {
                         dependency.artifactid = pom.getArtifactId();
                         dependency.Groupname = groupid;
+                        //分组
 
+                        name_Group.put(dependency.getFileName(), dependency.Groupname);
+                        name_dependency.put(dependency.getFileName(), dependency);
                     }
-                    //分组
 
-                    name_Group.put(dependency.getFileName(), groupid);
-                    name_dependency.put(dependency.getFileName(), dependency);
-                    String artifactid = pom.getArtifactId();
 
 //                    FunctionUtil.ClassPaths = FunctionUtil.ClassPaths.concat(File.pathSeparatorChar+dependency.getActualFilePath());
                     //用第一个pom文件的artifactid 就是本项目的artifactid（启发式）
@@ -694,7 +693,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 
 
     public void detectNPIJar(List<Dependency> dcDependencies) {
-        FunctionUtil functionUtil =new FunctionUtil();
+        FunctionUtil functionUtil = new FunctionUtil();
 
         for (int i = 0; i < dcDependencies.size(); i++) {
             functionUtil.ClassPaths = FunctionUtil.ClassPaths.concat(dcDependencies.get(i).getActualFilePath().replace('\\', '/') + File.pathSeparatorChar);
@@ -712,58 +711,56 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
         }
 
 //        //找到一方、二方库jar的所有public函数
-        for (Dependency owndependency : OwnGroupDependencies.values()) {
-            String classfunctionstr = functionUtil.functionDetect(owndependency.getActualFilePath().replace('\\', '/'), owndependency.artifactid, "own");
-//            FunctionUtil.findAllSig(owndependency.getActualFilePath().replace('\\', '/'),"own");
-            if (classfunctionstr != ""){
-                FunctionUtil.OWNJarsFunctions.put(owndependency.getDisplayFileName(), classfunctionstr);
-                FunctionUtil.OwnGroupDependenciesFilePaths.put(owndependency.getDisplayFileName(), owndependency.getActualFilePath().replace('\\', '/'));
-
-            }
-        }
-        for (Dependency directdependency : DirectGroupDependencies.values()) {
-
-            String classfunctionstr = functionUtil.functionDetect(directdependency.getActualFilePath().replace('\\', '/'), directdependency.artifactid, "direct");
-//            FunctionUtil.findAllSig(directdependency.getActualFilePath().replace('\\', '/'),"direct");
-            if (classfunctionstr != ""){
-                FunctionUtil.DIRECTJarsFunctions.put(directdependency.getDisplayFileName(), classfunctionstr);
-                FunctionUtil.DirectGroupDependenciesFilePaths.put(directdependency.getDisplayFileName(), directdependency.getActualFilePath().replace('\\', '/'));
-            }
-        }
-
-        for (Dependency thirddependency : ThirdGroupDependencies.values()) {
-            int flag = 0;
-            for (Dependency npijar : NPIJars.values()
-            ) {
-                if (thirddependency == npijar) {
-                    flag = 1;
-                    break;
-                }
-            }
-            if (flag == 1) continue;
-
-//            FunctionUtil.findAllSig(thirddependency.getActualFilePath().replace('\\', '/'),"third");
-
-            String classfunctionstr = functionUtil.functionDetect(thirddependency.getActualFilePath().replace('\\', '/'), thirddependency.artifactid, "third");
-            if (classfunctionstr != "") {
-                FunctionUtil.ThirdGroupDependenciesFilePaths.put(thirddependency.getDisplayFileName(), thirddependency.getActualFilePath().replace('\\', '/'));
-                FunctionUtil.THIRDJarsFunctions.put(thirddependency.getDisplayFileName(), classfunctionstr);
-            }
-        }
-
-        for (Dependency NPIJar : NPIJars.values()) {
-//            if(!NPIJar.getDisplayFileName().contains("LatencyUtils")) continue;
-            String classfunctionstr = functionUtil.functionDetect(NPIJar.getActualFilePath().replace('\\', '/'), NPIJar.artifactid, "four");
-            if (classfunctionstr != "") {
-                FunctionUtil.NPIJarsFunctions.put(NPIJar.getDisplayFileName(), classfunctionstr);
-            } else System.out.println("classfunctionstr为空的孤立Jar包: " + NPIJar.getDisplayFileName());
-        }
-
-        functionUtil.CFGBuild();
+//        for (Dependency owndependency : OwnGroupDependencies.values()) {
+//            String classfunctionstr = functionUtil.functionDetect(owndependency.getActualFilePath().replace('\\', '/'), owndependency.artifactid, "own");
+////            FunctionUtil.findAllSig(owndependency.getActualFilePath().replace('\\', '/'),"own");
+//            if (classfunctionstr != ""){
+//                FunctionUtil.OWNJarsFunctions.put(owndependency.getDisplayFileName(), classfunctionstr);
+//                FunctionUtil.OwnGroupDependenciesFilePaths.put(owndependency.getDisplayFileName(), owndependency.getActualFilePath().replace('\\', '/'));
+//
+//            }
+//        }
+//        for (Dependency directdependency : DirectGroupDependencies.values()) {
+//
+//            String classfunctionstr = functionUtil.functionDetect(directdependency.getActualFilePath().replace('\\', '/'), directdependency.artifactid, "direct");
+////            FunctionUtil.findAllSig(directdependency.getActualFilePath().replace('\\', '/'),"direct");
+//            if (classfunctionstr != ""){
+//                FunctionUtil.DIRECTJarsFunctions.put(directdependency.getDisplayFileName(), classfunctionstr);
+//                FunctionUtil.DirectGroupDependenciesFilePaths.put(directdependency.getDisplayFileName(), directdependency.getActualFilePath().replace('\\', '/'));
+//            }
+//        }
+//
+//        for (Dependency thirddependency : ThirdGroupDependencies.values()) {
+//            int flag = 0;
+//            for (Dependency npijar : NPIJars.values()
+//            ) {
+//                if (thirddependency == npijar) {
+//                    flag = 1;
+//                    break;
+//                }
+//            }
+//            if (flag == 1) continue;
+//
+////            FunctionUtil.findAllSig(thirddependency.getActualFilePath().replace('\\', '/'),"third");
+//
+//            String classfunctionstr = functionUtil.functionDetect(thirddependency.getActualFilePath().replace('\\', '/'), thirddependency.artifactid, "third");
+//            if (classfunctionstr != "") {
+//                FunctionUtil.ThirdGroupDependenciesFilePaths.put(thirddependency.getDisplayFileName(), thirddependency.getActualFilePath().replace('\\', '/'));
+//                FunctionUtil.THIRDJarsFunctions.put(thirddependency.getDisplayFileName(), classfunctionstr);
+//            }
+//        }
+//
+//        for (Dependency NPIJar : NPIJars.values()) {
+////            if(!NPIJar.getDisplayFileName().contains("LatencyUtils")) continue;
+//            String classfunctionstr = functionUtil.functionDetect(NPIJar.getActualFilePath().replace('\\', '/'), NPIJar.artifactid, "four");
+//            if (classfunctionstr != "") {
+//                FunctionUtil.NPIJarsFunctions.put(NPIJar.getDisplayFileName(), classfunctionstr);
+//            } else System.out.println("classfunctionstr为空的孤立Jar包: " + NPIJar.getDisplayFileName());
+//        }
+//
+//        functionUtil.CFGBuild();
 
 //        //获取NPIjar的所有函数名int i =0;
-
-
 
 
     }
@@ -809,35 +806,28 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
         JarAnalyzer jarAnalyzer = new JarAnalyzer();
 //
         JSONObject root1 = new JSONObject();
-
+        JSONObject root2 = new JSONObject();
         JSONObject root4 = new JSONObject();
 
         JSONArray nodes = new JSONArray();
 
 
         String nodePath = "./node.json";
-        String nodEedgePath = "./nodeedge.json";
+        String nodEdgePath = "./nodeedge.json";
+        String allEdgesPath = "./allEdges.json";
 
 
         try {
             File file1 = creatSJsonFile(nodePath);
-            File file4 = creatSJsonFile(nodEedgePath);
-//
-//
-//
-//
-//
+            File file2 = creatSJsonFile(allEdgesPath);
+            File file4 = creatSJsonFile(nodEdgePath);
             for (Dependency dependency : dependencies
             ) {
-
                 JSONObject node = new JSONObject();
-
-                node.put("id", dependency.getDisplayFileName());
-                node.put("level", dependency.level);
                 node.put("label", dependency.getDisplayFileName());
+                node.put("group", dependency.Groupname);
+                node.put("level", dependency.level);
                 nodes.put(node);
-
-
             }
 
             JSONArray nodeEdges = new JSONArray();
@@ -853,8 +843,10 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 
 
             //加边
-//            jarAnalyzer.topoSort(edges,nodeEdges,dependencies);
-
+            JSONArray allEdges = new JSONArray();
+            jarAnalyzer.topoSort(allEdges, dependencies);
+            root2.put("allEdges", allEdges);
+            writeJsonFile(file2, root2);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -978,7 +970,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
     }
 
 
-    int[][] copyadj = adj;
+    int[][] copyadj = new int[500][500];
     public Set<Integer> path = new HashSet<>();
 
     public void DFS(int index, JSONArray requestedby, List<Dependency> dependencies) {
@@ -989,25 +981,32 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                     if (dependencies.get(i).level == "own" || dependencies.get(i).level == "direct")
                         requestedby.put(dependencies.get(i).Groupname + ":" + dependencies.get(i).getFileName());
                     path.add(i);
-                }
-                if (path.size() < 10)
                     DFS(i, requestedby, dependencies);
+                }
+//                if (path.size() < 10)
+//                    DFS(i, requestedby, dependencies);
             }
         }
     }
 
     public void addEdges(int firstindex, JSONArray nodeEdges, List<Dependency> dependencies) throws JSONException {
-        copyadj = adj;
+        for (int i = 0; i < dependencies.size(); i++) {
+            for (int j = 0; j < dependencies.size(); j++) {
+                copyadj[i][j] = adj[i][j];
+            }
+
+        }
         path = new HashSet<>();
         ArrayList<Integer> store = new ArrayList<>();
         JSONArray requestedby = new JSONArray();
 
+
+        JSONObject nodeEdge = new JSONObject();
+        nodeEdge.put("Jar Name", dependencies.get(firstindex).Groupname+":"+dependencies.get(firstindex).getDisplayFileName());
         for (int i = 0; i < dependencies.size(); i++) {
             if (copyadj[i][firstindex] == 1) {
                 Dependency nextdependency = dependencies.get(i);
-                JSONObject nodeEdge = new JSONObject();
 
-                nodeEdge.put("Jar Name", dependencies.get(firstindex).getDisplayFileName());
 
                 JSONObject direct = new JSONObject();
                 direct.put("Directly requested by:", nextdependency.Groupname + ":" + nextdependency.getDisplayFileName());
@@ -1080,7 +1079,6 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 
                         nodeEdge.put("targetnode", nextdependency.getDisplayFileName());
                         nodeEdge.put("target", nextdependency.Groupname);
-                        nodeEdge.put("mark", 0);
 
                         nodeEdges.put(nodeEdge);
 

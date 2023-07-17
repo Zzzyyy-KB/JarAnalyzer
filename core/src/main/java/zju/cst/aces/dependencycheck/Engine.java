@@ -650,9 +650,8 @@ public class Engine implements FileFilter, AutoCloseable {
                     ) {
                         jarAnalyzer.analyzeIntro(dependency, dependencies, index++, MARKFILE);
                     }
-
-                    jarAnalyzer.buildDependencyTree(dependencies);
                     jarAnalyzer.detectNPIJar(dependencies);
+                    jarAnalyzer.buildDependencyTree(dependencies);
 
 
                 } catch (Exception e) {
