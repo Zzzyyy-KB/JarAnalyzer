@@ -702,65 +702,57 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
             if (dcDependencies.get(i).level != "own" && dcDependencies.get(i).level != "direct") {
                 if (degree[i] == 0) {
                     Dependency dependency = dcDependencies.get(i);
-                    if (!dependency.getDisplayFileName().contains("shaded")) {
                         NPIJars.put(NPIJars.size(), dependency);
                         System.out.println("NPI JAR:" + dependency.getDisplayFileName());
-                    }
+
                 }
             }
         }
 
 //        //找到一方、二方库jar的所有public函数
-//        for (Dependency owndependency : OwnGroupDependencies.values()) {
-//            String classfunctionstr = functionUtil.functionDetect(owndependency.getActualFilePath().replace('\\', '/'), owndependency.artifactid, "own");
-////            FunctionUtil.findAllSig(owndependency.getActualFilePath().replace('\\', '/'),"own");
-//            if (classfunctionstr != ""){
-//                FunctionUtil.OWNJarsFunctions.put(owndependency.getDisplayFileName(), classfunctionstr);
-//                FunctionUtil.OwnGroupDependenciesFilePaths.put(owndependency.getDisplayFileName(), owndependency.getActualFilePath().replace('\\', '/'));
-//
-//            }
-//        }
-//        for (Dependency directdependency : DirectGroupDependencies.values()) {
-//
-//            String classfunctionstr = functionUtil.functionDetect(directdependency.getActualFilePath().replace('\\', '/'), directdependency.artifactid, "direct");
-////            FunctionUtil.findAllSig(directdependency.getActualFilePath().replace('\\', '/'),"direct");
-//            if (classfunctionstr != ""){
-//                FunctionUtil.DIRECTJarsFunctions.put(directdependency.getDisplayFileName(), classfunctionstr);
-//                FunctionUtil.DirectGroupDependenciesFilePaths.put(directdependency.getDisplayFileName(), directdependency.getActualFilePath().replace('\\', '/'));
-//            }
-//        }
-//
-//        for (Dependency thirddependency : ThirdGroupDependencies.values()) {
-//            int flag = 0;
-//            for (Dependency npijar : NPIJars.values()
-//            ) {
-//                if (thirddependency == npijar) {
-//                    flag = 1;
-//                    break;
-//                }
-//            }
-//            if (flag == 1) continue;
-//
-////            FunctionUtil.findAllSig(thirddependency.getActualFilePath().replace('\\', '/'),"third");
-//
-//            String classfunctionstr = functionUtil.functionDetect(thirddependency.getActualFilePath().replace('\\', '/'), thirddependency.artifactid, "third");
-//            if (classfunctionstr != "") {
-//                FunctionUtil.ThirdGroupDependenciesFilePaths.put(thirddependency.getDisplayFileName(), thirddependency.getActualFilePath().replace('\\', '/'));
-//                FunctionUtil.THIRDJarsFunctions.put(thirddependency.getDisplayFileName(), classfunctionstr);
-//            }
-//        }
-//
-//        for (Dependency NPIJar : NPIJars.values()) {
-////            if(!NPIJar.getDisplayFileName().contains("LatencyUtils")) continue;
-//            String classfunctionstr = functionUtil.functionDetect(NPIJar.getActualFilePath().replace('\\', '/'), NPIJar.artifactid, "four");
-//            if (classfunctionstr != "") {
-//                FunctionUtil.NPIJarsFunctions.put(NPIJar.getDisplayFileName(), classfunctionstr);
-//            } else System.out.println("classfunctionstr为空的孤立Jar包: " + NPIJar.getDisplayFileName());
-//        }
-//
-//        functionUtil.CFGBuild();
+        for (Dependency owndependency : OwnGroupDependencies.values()) {
+            String classfunctionstr = functionUtil.functionDetect(owndependency.getActualFilePath().replace('\\', '/'), owndependency.artifactid, "own");
+            if (classfunctionstr != ""){
+                FunctionUtil.OWNJarsFunctions.put(owndependency.getDisplayFileName(), classfunctionstr);
+                FunctionUtil.OwnGroupDependenciesFilePaths.put(owndependency.getDisplayFileName(), owndependency.getActualFilePath().replace('\\', '/'));
 
-//        //获取NPIjar的所有函数名int i =0;
+            }
+        }
+        for (Dependency directdependency : DirectGroupDependencies.values()) {
+
+            String classfunctionstr = functionUtil.functionDetect(directdependency.getActualFilePath().replace('\\', '/'), directdependency.artifactid, "direct");
+            if (classfunctionstr != ""){
+                FunctionUtil.DIRECTJarsFunctions.put(directdependency.getDisplayFileName(), classfunctionstr);
+                FunctionUtil.DirectGroupDependenciesFilePaths.put(directdependency.getDisplayFileName(), directdependency.getActualFilePath().replace('\\', '/'));
+            }
+        }
+
+        for (Dependency thirddependency : ThirdGroupDependencies.values()) {
+            int flag = 0;
+            for (Dependency npijar : NPIJars.values()
+            ) {
+                if (thirddependency == npijar) {
+                    flag = 1;
+                    break;
+                }
+            }
+            if (flag == 1) continue;
+
+            String classfunctionstr = functionUtil.functionDetect(thirddependency.getActualFilePath().replace('\\', '/'), thirddependency.artifactid, "third");
+            if (classfunctionstr != "") {
+                FunctionUtil.ThirdGroupDependenciesFilePaths.put(thirddependency.getDisplayFileName(), thirddependency.getActualFilePath().replace('\\', '/'));
+                FunctionUtil.THIRDJarsFunctions.put(thirddependency.getDisplayFileName(), classfunctionstr);
+            }
+        }
+
+        for (Dependency NPIJar : NPIJars.values()) {
+            String classfunctionstr = functionUtil.functionDetect(NPIJar.getActualFilePath().replace('\\', '/'), NPIJar.artifactid, "four");
+            if (classfunctionstr != "") {
+                FunctionUtil.NPIJarsFunctions.put(NPIJar.getDisplayFileName(), classfunctionstr);
+            } else System.out.println("classfunctionstr为空的孤立Jar包: " + NPIJar.getDisplayFileName());
+        }
+
+        functionUtil.CFGBuild();
 
 
     }
