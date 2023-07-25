@@ -22,11 +22,11 @@ public class demo {
         System.out.println("输入jar包所在目录");
         final demo demo = new demo();
 //:\:\java\JavaCallGraph\target\JavaCallgraph-1.0-SNAPSHOT-jar-with-dependencies.jar
-        try{  String[] scanfiles = new String[]{"D:\\java\\code-similarity-0.0.2.jar"};
+        try{  String[] scanfiles = new String[]{"D:\\java\\cg.jar"};
             String[] oF=new String[]{"html"};
             String[] excl = new String[]{""};
             demo.runScan("D:\\1postgraduate", oF, "", scanfiles
-                    , excl, 0, 11,"./inputjson.json");}
+                    , excl, 0, 11,"./cgconfig.json");}
         catch( ExceptionCollection | ReportException ex) {
             System.out.println(ex.getMessage());
             System.out.println("database exception");
@@ -188,52 +188,10 @@ public class demo {
                 exCol = ex;
             }
 
-            try {
-                for (String outputFormat : outputFormats) {
-                    engine.writeReports(applicationName, new File(reportDirectory), outputFormat, exCol);
-                }
-            } catch (ReportException ex) {
-                if (exCol != null) {
-                    exCol.addException(ex);
-                    throw exCol;
-                } else {
-                    throw ex;
-                }
-            }
-            if (exCol != null && !exCol.getExceptions().isEmpty()) {
-                throw exCol;
-            }
-            return determineReturnCode(engine, cvssFailScore);
-        } finally {
-            if (engine != null) {
-                engine.close();
-            }
+    }catch (ExceptionCollection e){
+            e.printStackTrace();
         }
-    }
-    /**
-     * Determines the return code based on if one of the dependencies scanned
-     * has a vulnerability with a CVSS score above the cvssFailScore.
-     *
-     * @param engine the engine used during analysis
-     * @param cvssFailScore the max allowed CVSS score
-     * @return returns <code>1</code> if a severe enough vulnerability is
-     * identified; otherwise <code>0</code>
-     */
-    private int determineReturnCode(Engine engine, float cvssFailScore) {
-        int retCode = 0;
-        //Set the exit code based on whether we found a high enough vulnerability
-        final StringBuilder ids = new StringBuilder();
-
-        if (ids.length() > 0) {
-            System.out.println(
-                    String.format("%n%nOne or more dependencies were identified with vulnerabilities that have a CVSS score greater than or "
-                            + "equal to '%.1f': %n%s%n%nSee the dependency-check report for more details.%n%n", cvssFailScore, ids)
-            );
-
-            retCode = 1;
-        }
-
-        return retCode;
+        return symLinkDepth;
     }
 
 }

@@ -41,7 +41,6 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import static zju.cst.aces.dependencycheck.analyzer.AnalysisPhase.*;
-import static zju.cst.aces.dependencycheck.analyzer.JarAnalyzer.formatJson;
 
 /**
  * Scans files, directories, etc. for Dependencies. Analyzers are loaded and
@@ -652,7 +651,7 @@ public class Engine implements FileFilter, AutoCloseable {
                     }
                     jarAnalyzer.detectNPIJar(dependencies);
                     jarAnalyzer.buildDependencyTree(dependencies);
-
+                    jarAnalyzer.verifyVul(dependencies);
 
                 } catch (Exception e) {
                     e.printStackTrace();

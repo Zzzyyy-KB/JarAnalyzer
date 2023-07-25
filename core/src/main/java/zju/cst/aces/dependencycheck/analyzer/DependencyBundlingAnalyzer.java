@@ -463,19 +463,6 @@ public class DependencyBundlingAnalyzer extends AbstractDependencyComparingAnaly
     }
 
     /**
-     * Determine if the dependency ecosystem is equal in the given dependencies.
-     *
-     * @param ecoSystem the ecosystem to validate against
-     * @param dependency a dependency to compare
-     * @param nextDependency a dependency to compare
-     * @return true if the ecosystem is equal in both dependencies; otherwise
-     * false
-     */
-    private boolean ecosystemIs(String ecoSystem, Dependency dependency, Dependency nextDependency) {
-        return ecoSystem.equals(dependency.getEcosystem()) && ecoSystem.equals(nextDependency.getEcosystem());
-    }
-
-    /**
      * Determine if the dependency name is equal in the given dependencies.
      *
      * @param dependency a dependency to compare

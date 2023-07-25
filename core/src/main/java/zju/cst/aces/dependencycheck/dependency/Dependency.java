@@ -802,7 +802,7 @@ public class Dependency extends EvidenceCollection implements Serializable {
     /**
      * @return the ecosystem
      */
-    public String getEcosystem() {
+    public String osystem() {
         return ecosystem;
     }
 

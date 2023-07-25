@@ -17,7 +17,6 @@ import java.util.ArrayList;
 public class Crawler {
 
     // 定义要爬取的URL地址
-//    public static final String URL = "https://repo1.maven.org/maven2/org/springframework/boot/spring-boot-starter/3.1.1/spring-boot-starter-3.1.1.pom";
     public static String URL = "";
 
     public Crawler(String url){

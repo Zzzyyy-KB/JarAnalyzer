@@ -18,6 +18,11 @@ package zju.cst.aces.dependencycheck.analyzer;
  */
 
 
+//import com.alibaba.fastjson2.JSONException;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONException;
+import com.alibaba.fastjson2.JSONObject;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import com.github.packageurl.PackageURLBuilder;
@@ -28,9 +33,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.h2.util.IOUtils;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +41,7 @@ import zju.cst.aces.dependencycheck.analyzer.exception.AnalysisException;
 import zju.cst.aces.dependencycheck.dependency.Confidence;
 import zju.cst.aces.dependencycheck.dependency.Dependency;
 import zju.cst.aces.dependencycheck.dependency.EvidenceType;
+import zju.cst.aces.dependencycheck.dependency.naming.CVE;
 import zju.cst.aces.dependencycheck.dependency.naming.GenericIdentifier;
 import zju.cst.aces.dependencycheck.dependency.naming.Identifier;
 import zju.cst.aces.dependencycheck.dependency.naming.PurlIdentifier;
@@ -48,9 +51,16 @@ import zju.cst.aces.dependencycheck.xml.pom.Developer;
 import zju.cst.aces.dependencycheck.xml.pom.License;
 import zju.cst.aces.dependencycheck.xml.pom.Model;
 import zju.cst.aces.dependencycheck.xml.pom.PomUtils;
+//import com.alibaba.fastjson.JSON;
+//import com.alibaba.fastjson.JSONArray;
+//import com.alibaba.fastjson.JSONObject;
+//import org.json.*;
 
+import javax.xml.transform.Result;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.Map.Entry;
@@ -62,6 +72,8 @@ import java.util.jar.Manifest;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
+
+import static zju.cst.aces.dependencycheck.utils.JsonUtil.writeJsonFile;
 
 
 /**
@@ -333,17 +345,6 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
         final List<ClassNameInformation> classNames = collectClassNames(dependency);
         final String fileName = dependency.getFileName().toLowerCase();
 
-        //把待检测依赖加入依赖集
-//        if ((classNames.isEmpty()
-//                && (fileName.endsWith("-sources.jar")
-//                || fileName.endsWith("-javadoc.jar")
-//                || fileName.endsWith("-src.jar")
-//                || fileName.endsWith("-doc.jar")
-//                || isMacOSMetaDataFile(dependency, engine)))
-//                || !isZipFile(dependency)) {
-//            engine.removeDependency(dependency);
-//            return;
-//        }
         Exception exception = null;
         boolean hasManifest = false;
         try {
@@ -372,27 +373,6 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
         }
 
 
-    }
-
-    /**
-     * Checks if the given dependency appears to be a macOS meta-data file,
-     * returning true if its filename starts with a ._ prefix and if there is
-     * another dependency with the same filename minus the ._ prefix, otherwise
-     * it returns false.
-     *
-     * @param dependency the dependency to check if it's a macOS meta-data file
-     * @param engine     the engine that is scanning the dependencies
-     * @return whether or not the given dependency appears to be a macOS
-     * meta-data file
-     */
-    @SuppressFBWarnings(justification = "If actual file path is not null the path will have elements and getFileName will not be called on a null",
-            value = {"NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"})
-    private boolean isMacOSMetaDataFile(final Dependency dependency, final Engine engine) {
-        if (dependency.getActualFilePath() != null) {
-            final String fileName = Paths.get(dependency.getActualFilePath()).getFileName().toString();
-            return fileName.startsWith("._") && hasDependencyWithFilename(engine.getDependencies(), fileName.substring(2));
-        }
-        return false;
     }
 
     /**
@@ -447,9 +427,10 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
     public void analyzeIntro(Dependency dependency, List<Dependency> dcDependencies, int index, String MARKFILE) throws XmlPullParserException {
         if (index == 0) {
             try {
-                File file = new File(MARKFILE);
-                String content = org.apache.commons.io.FileUtils.readFileToString(file, "UTF-8");
-                JSONObject jsonObject = new JSONObject(content);
+//                String content = org.apache.commons.io.FileUtils.readFileToString(file, "UTF-8");
+                String json = Files.readString(Path.of(MARKFILE));
+                JSONObject jsonObject = JSON.parseObject(json);
+
                 ownname = jsonObject.getString("一方库名");
                 directname = jsonObject.getString("二方库前缀");
             } catch (JSONException e) {
@@ -508,14 +489,11 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                     }
 
 
-//                    FunctionUtil.ClassPaths = FunctionUtil.ClassPaths.concat(File.pathSeparatorChar+dependency.getActualFilePath());
-                    //用第一个pom文件的artifactid 就是本项目的artifactid（启发式）
 
 
                     if (GroupBehalfNode.get(groupid) == null)
                         GroupBehalfNode.put(groupid, dependency.getDisplayFileName());
 
-                    //读取一方库、二方库
 
 
                     //判断一方、二方、三方包
@@ -523,8 +501,6 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                         dependency.level = "own";
                         OwnGroupDependencies.put(OwnGroupDependencies.size(), dependency);
                     }
-                    //第二个.的子串 eg com.hundson.jrecloud
-//                else if(dependency.Groupname.contains((dcDependencies.get(0).Groupname.substring(0,org.apache.commons.lang.StringUtils.ordinalIndexOf(dcDependencies.get(0).Groupname,".",2))))){
                     else if (dependency.Groupname.contains(directname)) {
                         dependency.level = "direct";
                         DirectGroupDependencies.put(DirectGroupDependencies.size(), dependency);
@@ -608,8 +584,8 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 
 
         } catch (IOException ex) {
-//            LOGGER.warn("Unable to read JarFile '{}'.", dependency.getActualFilePath());
-//            LOGGER.trace("", ex);
+            LOGGER.warn("Unable to read JarFile '{}'.", dependency.getActualFilePath());
+            LOGGER.trace("", ex);
         }
 
     }
@@ -678,7 +654,6 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
             Crawler crawler = new Crawler("https://repo1.maven.org/maven2/" + dependency.Groupname.replace(".", "/") + "/" + dependency.artifactid + "/" + level + "/" + pomName);
             ArrayList<String> dependecies = crawler.Crawl();
             if (dependecies == null) {
-//                System.out.println("还是没有的：" + dependency.getFileName());
                 return;
             }
             for (String d_name : dependecies) {
@@ -749,7 +724,8 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
             String classfunctionstr = functionUtil.functionDetect(NPIJar.getActualFilePath().replace('\\', '/'), NPIJar.artifactid, "four");
             if (classfunctionstr != "") {
                 FunctionUtil.NPIJarsFunctions.put(NPIJar.getDisplayFileName(), classfunctionstr);
-            } else System.out.println("classfunctionstr为空的孤立Jar包: " + NPIJar.getDisplayFileName());
+            }
+//            else LOGGER.info("classfunctionstr is null :"+NPIJar.getDisplayFileName()) ;
         }
 
         functionUtil.CFGBuild();
@@ -757,39 +733,6 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 
     }
 
-    public File creatSJsonFile(String path) {
-        try {
-            File file = new File(path);
-
-
-            if (!file.getParentFile().exists()) { // 如果父目录不存在，创建父目录
-                file.getParentFile().mkdirs();
-            }
-            if (file.exists()) { // 如果已存在,删除旧文件
-                file.delete();
-            }
-            file.createNewFile();
-            return file;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-
-    }
-
-    public void writeJsonFile(File file, JSONObject root) {
-        try {
-            String jsonString1 = formatJson(root.toString());
-            // 将格式化后的字符串写入文件
-            Writer write1 = new OutputStreamWriter(new FileOutputStream(file), "UTF-8");
-            write1.write(jsonString1);
-            write1.flush();
-            write1.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
 
     public void buildDependencyTree(List<Dependency> dependencies) {
 
@@ -810,16 +753,16 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 
 
         try {
-            File file1 = creatSJsonFile(nodePath);
-            File file2 = creatSJsonFile(allEdgesPath);
-            File file4 = creatSJsonFile(nodEdgePath);
+            File file1 = JsonUtil.creatSJsonFile(nodePath);
+            File file2 = JsonUtil.creatSJsonFile(allEdgesPath);
+            File file4 = JsonUtil.creatSJsonFile(nodEdgePath);
             for (Dependency dependency : dependencies
             ) {
                 JSONObject node = new JSONObject();
                 node.put("label", dependency.getDisplayFileName());
                 node.put("group", dependency.Groupname);
                 node.put("level", dependency.level);
-                nodes.put(node);
+                nodes.add(node);
             }
 
             JSONArray nodeEdges = new JSONArray();
@@ -971,7 +914,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                 copyadj[i][index] = 0;
                 if (!path.contains(i)) {
                     if (dependencies.get(i).level == "own" || dependencies.get(i).level == "direct")
-                        requestedby.put(dependencies.get(i).Groupname + ":" + dependencies.get(i).getFileName());
+                        requestedby.add(dependencies.get(i).Groupname + ":" + dependencies.get(i).getFileName());
                     path.add(i);
                     DFS(i, requestedby, dependencies);
                 }
@@ -1003,13 +946,13 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                 JSONObject direct = new JSONObject();
                 direct.put("Directly requested by:", nextdependency.Groupname + ":" + nextdependency.getDisplayFileName());
 
-                requestedby.put(direct);
+                requestedby.add(direct);
                 copyadj[i][firstindex] = 0;
                 path.add(firstindex);
                 path.add(i);
                 store.add(i);
                 nodeEdge.put("Requested by", requestedby);
-                nodeEdges.put(nodeEdge);
+                nodeEdges.add(nodeEdge);
             }
         }
         for (int i = 0; i < store.size(); i++) {
@@ -1072,7 +1015,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                         nodeEdge.put("targetnode", nextdependency.getDisplayFileName());
                         nodeEdge.put("target", nextdependency.Groupname);
 
-                        nodeEdges.put(nodeEdge);
+                        nodeEdges.add(nodeEdge);
 
                     }
                     degree[i]--;
@@ -1092,92 +1035,8 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
     }
 
 
-    public static String formatJson(String json) {
-        StringBuffer result = new StringBuffer();
-
-        int length = json.length();
-        int number = 0;
-        char key = 0;
-
-        // 遍历输入字符串。
-        for (int i = 0; i < length; i++) {
-            // 1、获取当前字符。
-            key = json.charAt(i);
-
-            // 2、如果当前字符是前方括号、前花括号做如下处理：
-            if ((key == '[') || (key == '{')) {
-                // （1）如果前面还有字符，并且字符为“：”，打印：换行和缩进字符字符串。
-                if ((i - 1 > 0) && (json.charAt(i - 1) == ':')) {
-                    result.append('\n');
-                    result.append(indent(number));
-                }
-
-                // （2）打印：当前字符。
-                result.append(key);
-
-                // （3）前方括号、前花括号，的后面必须换行。打印：换行。
-                result.append('\n');
-
-                // （4）每出现一次前方括号、前花括号；缩进次数增加一次。打印：新行缩进。
-                number++;
-                result.append(indent(number));
-
-                // （5）进行下一次循环。
-                continue;
-            }
-
-            // 3、如果当前字符是后方括号、后花括号做如下处理：
-            if ((key == ']') || (key == '}')) {
-                // （1）后方括号、后花括号，的前面必须换行。打印：换行。
-                result.append('\n');
-
-                // （2）每出现一次后方括号、后花括号；缩进次数减少一次。打印：缩进。
-                number--;
-                result.append(indent(number));
-
-                // （3）打印：当前字符。
-                result.append(key);
-
-                // （4）如果当前字符后面还有字符，并且字符不为“，”，打印：换行。
-                if (((i + 1) < length) && (json.charAt(i + 1) != ',')) {
-                    result.append('\n');
-                }
-
-                // （5）继续下一次循环。
-                continue;
-            }
-
-            // 4、如果当前字符是逗号。逗号后面换行，并缩进，不改变缩进次数。
-            if ((key == ',')) {
-                result.append(key);
-                result.append('\n');
-                result.append(indent(number));
-                continue;
-            }
-
-            // 5、打印：当前字符。
-            result.append(key);
-        }
-
-        return result.toString();
-    }
 
 
-    private static String SPACE = "   ";
-
-    /**
-     * 返回指定次数的缩进字符串。每一次缩进三个空格，即SPACE。
-     *
-     * @param number 缩进次数。
-     * @return 指定缩进次数的字符串。
-     */
-    private static String indent(int number) {
-        StringBuffer result = new StringBuffer();
-        for (int i = 0; i < number; i++) {
-            result.append(SPACE);
-        }
-        return result.toString();
-    }
 
 
     /**
@@ -2042,6 +1901,27 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 
             }
         }
+    }
+
+    /*
+    * Use CVD verify vulnerabilities
+    * */
+    public void verifyVul(List<Dependency> dependencies) {
+
+        CveAnalyzer.CveFilesDir  = "D:\\java\\json";
+
+        for (Dependency dependency: dependencies
+             ) {
+            List<String> all_vul_funcs = new ArrayList<>();
+            List<String> vul_func = CveAnalyzer.detectCve(dependency.Groupname,dependency.artifactid,dependency.getVersion());
+            if(vul_func!=null){
+                all_vul_funcs.addAll(vul_func);
+
+            }
+
+        }
+
+
     }
 
 

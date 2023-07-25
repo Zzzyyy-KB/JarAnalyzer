@@ -451,8 +451,6 @@ public class FunctionUtil {
 
 
         }
-        // 关闭线程池
-
 
         for (String leftnpijar : NPIJarsFunctions.keySet()) {
             if (!findNPIJARs.contains(leftnpijar)) {
@@ -460,6 +458,8 @@ public class FunctionUtil {
             }
         }
     }
+
+
 
     static class MyClassVisitor extends ClassVisitor {
         String classname = "";
@@ -552,15 +552,11 @@ public class FunctionUtil {
                         }
                     }
                 }
-//                                String str = sig.toString();
 
             }
-//                            System.out.println("The fully qualified field name is: " + name);
-//                            System.out.println("The fully qualified field descriptor is: " + descriptor);
             // 调用父类的visit方法
             FieldVisitor fieldVisitor = super.visitField(access, name, descriptor, signature, value);
             return fieldVisitor;
-            // 重写visitMethod方法，用于访问类中声明的方法
 
 
         }
