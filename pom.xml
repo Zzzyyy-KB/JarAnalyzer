@@ -27,89 +27,8 @@ Copyright (c) 2012 - Jeremy Long
         <module>utils</module>
         <module>core</module>
         <module>cli</module>
-        <!--        <module>ant</module>-->
-        <!--        <module>maven</module>-->
-        <!--        <module>archetype</module>-->
     </modules>
-    <name>Dependency-Check</name>
-    <url>https://github.com/jeremylong/DependencyCheck.git</url>
-    <description>dependency-check is a utility that identifies project dependencies and checks if there are any known, publicly disclosed vulnerabilities. This tool can be part of the solution to the OWASP Top 10 2013: A9 - Using Components with Known Vulnerabilities.</description>
-    <inceptionYear>2012</inceptionYear>
 
-    <organization>
-        <name>OWASP</name>
-        <url>https://www.owasp.org</url>
-    </organization>
-
-    <developers>
-        <developer>
-            <name>Jeremy Long</name>
-            <email>jeremy.long@owasp.org</email>
-            <organization>OWASP</organization>
-            <organizationUrl>https://www.owasp.org/</organizationUrl>
-            <roles>
-                <role>architect</role>
-                <role>developer</role>
-            </roles>
-        </developer>
-        <developer>
-            <name>Steve Springett</name>
-            <email>Steve.Springett@owasp.org</email>
-            <organization>OWASP</organization>
-            <organizationUrl>https://www.owasp.org/</organizationUrl>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </developer>
-        <developer>
-            <name>Will Stranathan</name>
-            <email>Will.Stranathan@owasp.org</email>
-            <organization>OWASP</organization>
-            <organizationUrl>https://www.owasp.org/</organizationUrl>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </developer>
-        <developer>
-            <name>Dale Visser</name>
-            <email>dvisser@ida.org</email>
-            <organization>Institute for Defense Analyses</organization>
-            <organizationUrl>https://www.ida.org/</organizationUrl>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </developer>
-    </developers>
-    <contributors>
-        <contributor>
-            <name>Hugo Costa</name>
-            <organization>OWASP</organization>
-            <organizationUrl>https://www.owasp.org/</organizationUrl>
-            <roles>
-                <role>logo design</role>
-            </roles>
-        </contributor>
-    </contributors>
-    <scm>
-        <connection>scm:git:https://github.com/jeremylong/DependencyCheck.git</connection>
-        <url>https://github.com/jeremylong/DependencyCheck</url>
-        <developerConnection>scm:git:https://github.com/jeremylong/DependencyCheck.git</developerConnection>
-        <tag>v6.4.1</tag>
-    </scm>
-    <issueManagement>
-        <system>github</system>
-        <url>https://github.com/jeremylong/DependencyCheck/issues</url>
-    </issueManagement>
-    <ciManagement>
-        <system>github-actions</system>
-        <url>https://github.com/jeremylong/DependencyCheck/actions</url>
-    </ciManagement>
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-        </license>
-    </licenses>
     <properties>
         <!--reproducible build-->
         <project.build.outputTimestamp>${git.commit.time}</project.build.outputTimestamp>

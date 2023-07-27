@@ -19,6 +19,7 @@ package zju.cst.aces.dependencycheck.analyzer;
 
 
 //import com.alibaba.fastjson2.JSONException;
+
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONException;
@@ -428,7 +429,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
         if (index == 0) {
             try {
 //                String content = org.apache.commons.io.FileUtils.readFileToString(file, "UTF-8");
-                String json = Files.readString(Path.of(MARKFILE));
+                String json = new String(Files.readAllBytes(Paths.get(MARKFILE)));
                 JSONObject jsonObject = JSON.parseObject(json);
 
                 ownname = jsonObject.getString("一方库名");
@@ -489,19 +490,15 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                     }
 
 
-
-
                     if (GroupBehalfNode.get(groupid) == null)
                         GroupBehalfNode.put(groupid, dependency.getDisplayFileName());
-
 
 
                     //判断一方、二方、三方包
                     if (dependency.Groupname.equals(ownname)) {
                         dependency.level = "own";
                         OwnGroupDependencies.put(OwnGroupDependencies.size(), dependency);
-                    }
-                    else if (dependency.Groupname.contains(directname)) {
+                    } else if (dependency.Groupname.contains(directname)) {
                         dependency.level = "direct";
                         DirectGroupDependencies.put(DirectGroupDependencies.size(), dependency);
                     } else {
@@ -555,9 +552,8 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 
                                     } else if (versiontemp.equals("${project.parent.version}"))
                                         versiontemp = model.getParent().getVersion();
-
                                 }
-                                detectIntro(dcDependencies, index, groupIdtemp, artifactIdtemp, true);
+                                detectIntro(dcDependencies, index, groupIdtemp, artifactIdtemp, versiontemp, true);
 
 
                             }
@@ -591,7 +587,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
     }
 
 
-    public void detectIntro(List<Dependency> dcDependencies, int index, String groupIdtemp, String artifactIdtemp, boolean flag) {
+    public void detectIntro(List<Dependency> dcDependencies, int index, String groupIdtemp, String artifactIdtemp, String versiontemp, boolean flag) {
         String d_name = groupIdtemp + ":" + artifactIdtemp;
         if (artifactIdtemp.contains("${"))
             return;
@@ -621,6 +617,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                 if (dep.level == "four") {
                     dep.Groupname = groupIdtemp;
                     dep.artifactid = artifactIdtemp;
+                    dep.setVersion(versiontemp);
                     findIntroNoPomJars.put(dep, k);
                     searchPomAndDetectIntro(dep, dcDependencies);
                 }
@@ -658,7 +655,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
             }
             for (String d_name : dependecies) {
                 String[] Array = d_name.split(":");
-                detectIntro(dcDependencies, index, Array[0], Array[1], false);
+                detectIntro(dcDependencies, index, Array[0], Array[1], Array[2], false);
             }
         } catch (Exception e) {
 
@@ -673,21 +670,20 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
         for (int i = 0; i < dcDependencies.size(); i++) {
             functionUtil.ClassPaths = FunctionUtil.ClassPaths.concat(dcDependencies.get(i).getActualFilePath().replace('\\', '/') + File.pathSeparatorChar);
 
-            //排除一方、二方库以及war包后的 非pom引入jar包
             if (dcDependencies.get(i).level != "own" && dcDependencies.get(i).level != "direct") {
                 if (degree[i] == 0) {
                     Dependency dependency = dcDependencies.get(i);
-                        NPIJars.put(NPIJars.size(), dependency);
-                        System.out.println("NPI JAR:" + dependency.getDisplayFileName());
+                    if(dependency.getDisplayFileName().contains("shaded")) continue;
+                    NPIJars.put(NPIJars.size(), dependency);
+                    LOGGER.info("NPI JAR:" + dependency.getDisplayFileName());
 
                 }
             }
         }
 
-//        //找到一方、二方库jar的所有public函数
         for (Dependency owndependency : OwnGroupDependencies.values()) {
             String classfunctionstr = functionUtil.functionDetect(owndependency.getActualFilePath().replace('\\', '/'), owndependency.artifactid, "own");
-            if (classfunctionstr != ""){
+            if (classfunctionstr != "") {
                 FunctionUtil.OWNJarsFunctions.put(owndependency.getDisplayFileName(), classfunctionstr);
                 FunctionUtil.OwnGroupDependenciesFilePaths.put(owndependency.getDisplayFileName(), owndependency.getActualFilePath().replace('\\', '/'));
 
@@ -696,7 +692,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
         for (Dependency directdependency : DirectGroupDependencies.values()) {
 
             String classfunctionstr = functionUtil.functionDetect(directdependency.getActualFilePath().replace('\\', '/'), directdependency.artifactid, "direct");
-            if (classfunctionstr != ""){
+            if (classfunctionstr != "") {
                 FunctionUtil.DIRECTJarsFunctions.put(directdependency.getDisplayFileName(), classfunctionstr);
                 FunctionUtil.DirectGroupDependenciesFilePaths.put(directdependency.getDisplayFileName(), directdependency.getActualFilePath().replace('\\', '/'));
             }
@@ -725,7 +721,6 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
             if (classfunctionstr != "") {
                 FunctionUtil.NPIJarsFunctions.put(NPIJar.getDisplayFileName(), classfunctionstr);
             }
-//            else LOGGER.info("classfunctionstr is null :"+NPIJar.getDisplayFileName()) ;
         }
 
         functionUtil.CFGBuild();
@@ -937,7 +932,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 
 
         JSONObject nodeEdge = new JSONObject();
-        nodeEdge.put("Jar Name", dependencies.get(firstindex).Groupname+":"+dependencies.get(firstindex).getDisplayFileName());
+        nodeEdge.put("Jar Name", dependencies.get(firstindex).Groupname + ":" + dependencies.get(firstindex).getDisplayFileName());
         for (int i = 0; i < dependencies.size(); i++) {
             if (copyadj[i][firstindex] == 1) {
                 Dependency nextdependency = dependencies.get(i);
@@ -1033,10 +1028,6 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 
 
     }
-
-
-
-
 
 
     /**
@@ -1904,21 +1895,20 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
     }
 
     /*
-    * Use CVD verify vulnerabilities
-    * */
+     * Use CVD verify vulnerabilities
+     * */
     public void verifyVul(List<Dependency> dependencies) {
 
-        CveAnalyzer.CveFilesDir  = "D:\\java\\json";
+//        CveAnalyzer.CveFilesDir  = "D:\\java\\json";
 
-        for (Dependency dependency: dependencies
-             ) {
-            List<String> all_vul_funcs = new ArrayList<>();
-            List<String> vul_func = CveAnalyzer.detectCve(dependency.Groupname,dependency.artifactid,dependency.getVersion());
-            if(vul_func!=null){
-                all_vul_funcs.addAll(vul_func);
-
-            }
-
+        // TODO: 2023/7/25 Time Complexicity O(mn)
+        for (Dependency dependency : dependencies
+        ) {
+            List<String> vul_func = CveAnalyzer.detectCve(dependency);
+            if (vul_func != null)
+                FunctionUtil.dep_vul.put(dependency.getDisplayFileName(), vul_func);
+            FunctionUtil.vulFuncDetect("cg.jar");
+//            HashMap<Dependency, List<String>> vul_func = CveAnalyzer.detectCve(dependency);
         }
 
 

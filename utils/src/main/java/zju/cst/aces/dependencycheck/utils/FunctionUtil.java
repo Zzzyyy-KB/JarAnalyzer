@@ -69,6 +69,8 @@ public class FunctionUtil {
 
     public static HashMap<String, String> ThirdGroupDependenciesFilePaths = new HashMap<>();
 
+    public static HashMap<String, List<String>> dep_vul = new HashMap<>();
+
 
     public static final Logger LOGGER = LoggerFactory.getLogger(FunctionUtil.class);
 
@@ -77,7 +79,6 @@ public class FunctionUtil {
 
     public static Set<Pair<String, String>> Intro_relations = new HashSet<>();
 
-    public static final Logger NODE_LOGGER = LoggerFactory.getLogger("Node");
     public static final Logger EDGE_LOGGER = LoggerFactory.getLogger("Edge");
 
     private static File tmpFolder;
@@ -415,12 +416,10 @@ public class FunctionUtil {
 
         LOGGER.info("Start to dump call graph");
         //查找引入函数
-        findNPIIntro();
+//        findNPIIntro();
     }
 
     static Set<String> findNPIJARs = new HashSet<>();
-
-    static ArrayList<SootMethod> sootMethods = new ArrayList<>();
 
     private void findNPIIntro() {
         for (Iterator<MethodOrMethodContext> iterator = Scene.v().getReachableMethods().listener(); iterator.hasNext(); ) {
@@ -459,6 +458,59 @@ public class FunctionUtil {
         }
     }
 
+    public static List<SootMethod> detectMethod = new ArrayList<>();
+
+    private static boolean DFS(SootMethod method, boolean tag) {
+        if (tag) return tag;
+        for (Iterator<Edge> it = callGraph.edgesOutOf(method); it.hasNext(); ) {
+            Edge edge = it.next();
+            SootMethod tgtMethod = edge.tgt();
+            if (detectMethod.contains(tgtMethod)) continue;
+            detectMethod.add(tgtMethod);
+
+            SootClass tgtClass = edge.tgt().getDeclaringClass();
+
+            LOGGER.info(tgtMethod.getName() + " is called in " + tgtClass.getName());
+
+            for (Map.Entry<String, List<String>> iterator : dep_vul.entrySet()) {
+                String vul_dep = iterator.getKey();
+                List<String> vul_funcs = iterator.getValue();
+                for (String vul_func : vul_funcs) {
+                    if (vul_func.replaceAll("/", ".").contains(tgtMethod.getName())) {
+                        LOGGER.info(vul_func + " is founded in " + vul_dep);
+                        if (vul_func.replaceAll("/", ".").contains(tgtClass.getName()))
+                            LOGGER.info(vul_func + " in " + vul_dep + " is called");
+
+                        tag = true;
+                        return tag;
+                    }
+                }
+            }
+             tag = DFS(tgtMethod, tag);
+            if(tag) return tag;
+        }
+        return false;
+
+    }
+
+    public static void vulFuncDetect(String detectJarName) {
+        for (Iterator<MethodOrMethodContext> iterator = Scene.v().getReachableMethods().listener(); iterator.hasNext(); ) {
+            SootMethod method = (SootMethod) iterator.next();
+            //过滤简单函数
+            boolean tag = false;
+            String[] detectFuncs = OWNJarsFunctions.get(detectJarName).split(";");
+            for (String detectfuc : detectFuncs
+            ) {
+                if (detectfuc.equals(method.getDeclaringClass().getName() + "_" + method.getName())) {
+                    if (dep_vul != null)
+                        DFS(method, false);
+                }
+            }
+
+
+        }
+
+    }
 
 
     static class MyClassVisitor extends ClassVisitor {

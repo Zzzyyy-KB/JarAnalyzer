@@ -50,11 +50,11 @@ public class Crawler {
                 // 获取groupId、artifactId、version、scope等属性的值
                 String groupId = dependencyElement.select("groupId").text();
                 String artifactId = dependencyElement.select("artifactId").text();
-//                String version = dependencyElement.select("version").text();
+                String version = dependencyElement.select("version").text();
 //                String scope = dependencyElement.select("scope").text();
                 // 打印结果
 //                System.out.println(dependencyElement.text());
-                res.add(groupId+":"+artifactId);
+                res.add(groupId+":"+artifactId+":"+version);
 
 
             }
@@ -64,14 +64,5 @@ public class Crawler {
         httpClient.close();
         return res;
     }
-
-    public static void main(String[] args) {
-        String str = "Ljava/util/jar/JarFile;Ljava/util/jar/JarEntry;Ljava/util/Set<Lorg/objectweb/asm/tree/ClassNode;>;)Ljava/util/Set<Lorg/objectweb/asm/tree/ClassNode;>;";
-        String parts[]=str.split("[;<]");
-        for (String part: parts
-             ) {
-            System.out.println(part);
-
-        }
-    }
+    
 }
