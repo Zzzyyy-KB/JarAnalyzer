@@ -1905,11 +1905,13 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
         for (Dependency dependency : dependencies
         ) {
             List<String> vul_func = CveAnalyzer.detectCve(dependency);
-            if (vul_func != null)
+            if (vul_func.size()!=0) {
                 FunctionUtil.dep_vul.put(dependency.getDisplayFileName(), vul_func);
-            FunctionUtil.vulFuncDetect("cg.jar");
+            }
 //            HashMap<Dependency, List<String>> vul_func = CveAnalyzer.detectCve(dependency);
         }
+        FunctionUtil.vulFuncDetect("cg.jar");
+
 
 
     }

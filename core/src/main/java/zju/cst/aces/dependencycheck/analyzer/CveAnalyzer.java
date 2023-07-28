@@ -2,7 +2,6 @@ package zju.cst.aces.dependencycheck.analyzer;
 
 
 import com.alibaba.fastjson2.JSONObject;
-import fj.Hash;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import zju.cst.aces.dependencycheck.Engine;
@@ -16,7 +15,6 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,7 +28,7 @@ public class CveAnalyzer extends AbstractAnalyzer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CveAnalyzer.class);
 
-    public static String CveFilesDir = "";
+    public static String CveFilesDir = System.getProperty("user.dir")+"/json/";
     public static List<String> list = new ArrayList<>();
 
 
@@ -42,26 +40,19 @@ public class CveAnalyzer extends AbstractAnalyzer {
         return true;
     }
 
-    static class JsonFilter implements FilenameFilter {
-        // 重写accept方法，判断文件名是否以.json结尾
-        public boolean accept(File dir, String name) {
-            return name.endsWith(".json");
-        }
-    }
 
-    public void main(String[] args) {
-        String groupid = "com.google";
-        String artifactid = "guava", version = "1";
-        Dependency dependency = new Dependency();
-        dependency.Groupname = groupid;
-        dependency.artifactid =artifactid;
-        dependency.setVersion(version);
-        System.out.println(detectCve(dependency));
-        File dir = new File("C:\\");
-        // 创建一个JsonFilter对象，用于过滤json文件
-
-
-    }
+//    public  static void main(String[] args) {
+//        String groupid = "com.google";
+//        String artifactid = "guava", version = "1";
+//        Dependency dependency = new Dependency();
+//        dependency.Groupname = groupid;
+//        dependency.artifactid =artifactid;
+//        dependency.setVersion(version);
+//        System.out.println(detectCve(dependency));
+//        // 创建一个JsonFilter对象，用于过滤json文件
+//
+//
+//    }
 
     /*
      * Get Attributes from CVE
@@ -76,11 +67,11 @@ public class CveAnalyzer extends AbstractAnalyzer {
             JsonFilter filter = new JsonFilter();
             File dir = new File(CveFilesDir);
             String[] jsonFiles = dir.list(filter);
-            for (String filepath: jsonFiles
-                 ) {
+//            for (String filename: jsonFiles
+//                 ) {
 
-
-                CVE cve = JSONObject.parseObject(new String(Files.readAllBytes(Paths.get(filepath))),
+//                System.out.println(filepath);
+                CVE cve = JSONObject.parseObject(new String(Files.readAllBytes(Paths.get("CVE-2020-8908_meta.json"))),
                         CVE.class);
                 List<String> cpelist = cve.getCpes();
                 List<CVEPatchesItem> cvePatchesItems = cve.getPatches();
@@ -120,7 +111,7 @@ public class CveAnalyzer extends AbstractAnalyzer {
                     }
 
                 }
-            }
+//            }
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -147,5 +138,12 @@ public class CveAnalyzer extends AbstractAnalyzer {
     @Override
     public AnalysisPhase getAnalysisPhase() {
         return null;
+    }
+
+    static class JsonFilter implements FilenameFilter {
+        // 重写accept方法，判断文件名是否以.json结尾
+        public boolean accept(File dir, String name) {
+            return name.endsWith(".json")&&name.startsWith("CVE");
+        }
     }
 }

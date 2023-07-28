@@ -416,7 +416,7 @@ public class FunctionUtil {
 
         LOGGER.info("Start to dump call graph");
         //查找引入函数
-//        findNPIIntro();
+        findNPIIntro();
     }
 
     static Set<String> findNPIJARs = new HashSet<>();
@@ -476,8 +476,8 @@ public class FunctionUtil {
                 String vul_dep = iterator.getKey();
                 List<String> vul_funcs = iterator.getValue();
                 for (String vul_func : vul_funcs) {
-                    if (vul_func.replaceAll("/", ".").contains(tgtMethod.getName())) {
-                        LOGGER.info(vul_func + " is founded in " + vul_dep);
+                    if (vul_func.substring(vul_func.indexOf("_")).equals(tgtMethod.getName())) {
+                        LOGGER.info(vul_func + " is founded in " + tgtClass.getName());
                         if (vul_func.replaceAll("/", ".").contains(tgtClass.getName()))
                             LOGGER.info(vul_func + " in " + vul_dep + " is called");
 
